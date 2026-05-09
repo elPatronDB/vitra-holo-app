@@ -4,18 +4,25 @@ import { create } from 'zustand';
 export const useHoloStore = create((set, get) => ({
   holograms: [
     {
-      id: '1',
-      title: 'Ciudad Cyberpunk Neón',
-      imageUrl: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&q=80&w=800',
+      id: 'obj-01',
+      title: 'Cráneo de Cristal 3D',
+      imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800',
       status: 'Listo',
       createdAt: 'Hace 2 horas',
     },
     {
-      id: '2',
-      title: 'Formas Geométricas Abstractas',
-      imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800',
+      id: 'obj-02',
+      title: 'Reloj Mecánico Virtual',
+      imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800',
       status: 'Procesando',
       createdAt: 'Hace 5 horas',
+    },
+    {
+      id: 'obj-03',
+      title: 'Dron Miniatura Neo',
+      imageUrl: 'https://images.unsplash.com/photo-1524143986875-3b098d78b363?auto=format&fit=crop&q=80&w=800',
+      status: 'Listo',
+      createdAt: 'Ayer',
     },
   ],
   isBluetoothConnected: false,

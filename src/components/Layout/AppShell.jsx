@@ -9,6 +9,7 @@ const AppShell = () => {
   const navItems = [
     { path: '/', label: 'Inicio', OutlineIcon: HomeIcon, SolidIcon: HomeSolid },
     { path: '/generate', label: 'Crear IA', OutlineIcon: SparklesIcon, SolidIcon: SparklesSolid },
+    { path: '/project', label: 'Proyectar', isAction: true },
     { path: '/gallery', label: 'Galería', OutlineIcon: Square3Stack3DIcon, SolidIcon: StackSolid },
     { path: '/settings', label: 'Ajustes', OutlineIcon: Cog6ToothIcon, SolidIcon: CogSolid },
   ];
@@ -45,10 +46,32 @@ const AppShell = () => {
         </main>
 
         {/* Bottom Navigation */}
-        <nav className="glass-effect sticky bottom-0 w-full pb-safe pt-2 px-6 border-t border-white/5 z-50">
+        <nav className="glass-effect sticky bottom-0 w-full pb-safe pt-2 px-4 border-t border-white/5 z-50">
           <ul className="flex justify-between items-center mb-4">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
+              
+              if (item.isAction) {
+                return (
+                  <li key={item.path} className="-mt-12">
+                    <Link 
+                      to={item.path}
+                      className="flex flex-col items-center group"
+                    >
+                      <div className="w-16 h-16 rounded-full bg-vitra-cyan shadow-[0_0_20px_rgba(0,229,255,0.5)] border-4 border-vitra-graphite flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95">
+                        <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="#1A1C23" />
+                          <circle cx="50" cy="50" r="15" fill="#ffffff" />
+                        </svg>
+                      </div>
+                      <span className="text-[10px] mt-1 font-bold text-vitra-cyan uppercase tracking-tighter">
+                        {item.label}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              }
+
               const Icon = isActive ? item.SolidIcon : item.OutlineIcon;
               return (
                 <li key={item.path}>
@@ -56,10 +79,10 @@ const AppShell = () => {
                     to={item.path} 
                     className={`flex flex-col items-center p-2 rounded-2xl transition-all duration-300 ease-in-out ${isActive ? 'text-vitra-cyan' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
-                    <div className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${isActive ? 'bg-vitra-cyan/10 shadow-[0_0_15px_rgba(0,229,255,0.15)]' : 'bg-transparent'}`}>
-                      <Icon className={`w-6 h-6 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
+                    <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${isActive ? 'bg-vitra-cyan/10 shadow-[0_0_15px_rgba(0,229,255,0.15)]' : 'bg-transparent'}`}>
+                      <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
                     </div>
-                    <span className={`text-[10px] mt-1 font-medium ${isActive ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+                    <span className={`text-[9px] mt-1 font-medium ${isActive ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
                       {item.label}
                     </span>
                   </Link>

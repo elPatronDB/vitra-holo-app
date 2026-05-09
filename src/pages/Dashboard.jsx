@@ -4,7 +4,7 @@ import { SparklesIcon, PlayCircleIcon } from '@heroicons/react/24/solid';
 
 const Dashboard = () => {
   const holograms = useHoloStore((state) => state.holograms);
-  const userName = localStorage.getItem('user') || 'Alex';
+  const userName = localStorage.getItem('user') || 'Diego';
   
   return (
     <div className="flex flex-col gap-8 pb-8 animate-fade-in">
@@ -20,7 +20,7 @@ const Dashboard = () => {
         <button className="relative w-full bg-vitra-cyan text-vitra-graphite rounded-2xl py-4 px-6 font-bold flex items-center justify-center gap-3 hover:bg-cyan-300 transition-all active:scale-95 shadow-[0_0_20px_rgba(0,229,255,0.4)] border border-cyan-300 overflow-hidden group">
           <div className="absolute inset-0 bg-white/20 translate-x-[-100%] skew-x-[-15deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
           <SparklesIcon className="w-5 h-5 text-vitra-graphite" />
-          Generar Nuevo Holograma
+          Nuevo Vitra Holograma
         </button>
       </section>
 
