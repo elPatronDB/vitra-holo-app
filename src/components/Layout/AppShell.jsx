@@ -21,14 +21,8 @@ const AppShell = () => {
         
         {/* Header / Navbar */}
         <header className="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            {/* Minimalist Geometric Diamond SVG Logo */}
-            <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="#00B4D8" />
-              <path d="M50 5 L95 50 L50 70 L25 50 Z" fill="#00E5FF" opacity="0.8" />
-              <path d="M50 5 L25 50 L50 70 Z" fill="#1A1C23" opacity="0.6" />
-              <circle cx="50" cy="50" r="15" fill="#00E5FF" />
-            </svg>
+          <div className="flex items-center gap-3">
+            <img src="/vitra_logo.png" alt="Vitra Logo" className="w-8 h-8 object-contain" />
             <h1 className="text-xl font-bold tracking-widest uppercase bg-gradient-to-r from-white to-vitra-cyan bg-clip-text text-transparent drop-shadow-md">
               Vitra Holo
             </h1>
@@ -58,11 +52,8 @@ const AppShell = () => {
                       to={item.path}
                       className="flex flex-col items-center group"
                     >
-                      <div className="w-16 h-16 rounded-full bg-vitra-cyan shadow-[0_0_20px_rgba(0,229,255,0.5)] border-4 border-vitra-graphite flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95">
-                        <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M50 5 L95 50 L50 95 L5 50 Z" fill="#1A1C23" />
-                          <circle cx="50" cy="50" r="15" fill="#ffffff" />
-                        </svg>
+                      <div className="w-16 h-16 rounded-full bg-vitra-cyan shadow-[0_0_20px_rgba(0,229,255,0.5)] border-4 border-vitra-graphite flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95 overflow-hidden p-3">
+                        <img src="/vitra_logo.png" alt="Proyectar" className="w-full h-full object-contain brightness-0 invert" />
                       </div>
                       <span className="text-[10px] mt-1 font-bold text-vitra-cyan uppercase tracking-tighter">
                         {item.label}
