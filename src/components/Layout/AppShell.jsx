@@ -16,7 +16,7 @@ const AppShell = () => {
   return (
     <div className="min-h-screen bg-zinc-950 flex justify-center selection:bg-white selection:text-black">
       {/* Mobile view container simulating app shell on desktop */}
-      <div className="w-full max-w-md bg-base-100 min-h-screen relative shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-full max-w-md bg-base-100 h-screen relative shadow-2xl flex flex-col overflow-hidden">
         
         {/* Header / Navbar */}
         <header className="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
@@ -40,12 +40,12 @@ const AppShell = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4 scroll-smooth">
+        <main className="flex-1 overflow-y-auto pb-4 px-4 pt-4 scroll-smooth">
           <Outlet />
         </main>
 
         {/* Bottom Navigation */}
-        <nav className="glass-effect absolute bottom-0 w-full pb-safe pt-2 px-6 border-t border-white/5">
+        <nav className="glass-effect sticky bottom-0 w-full pb-safe pt-2 px-6 border-t border-white/5 z-50">
           <ul className="flex justify-between items-center mb-4">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;

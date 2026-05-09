@@ -4,13 +4,14 @@ import { SparklesIcon, PlayCircleIcon } from '@heroicons/react/24/solid';
 
 const Dashboard = () => {
   const holograms = useHoloStore((state) => state.holograms);
-
+  const userName = localStorage.getItem('user') || 'Alex';
+  
   return (
     <div className="flex flex-col gap-8 pb-8 animate-fade-in">
       {/* Sección Hero */}
       <section className="mt-2">
         <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
-          Hola, Alex
+          Hola, {userName}
         </h2>
         <p className="text-vitra-cyan/60 font-medium mb-6">
           ¿Listo para dar forma a la realidad hoy?
