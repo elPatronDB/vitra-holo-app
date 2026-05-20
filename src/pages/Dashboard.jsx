@@ -1,15 +1,35 @@
-
 import { useHoloStore } from '../store/useHoloStore';
 import { SparklesIcon, PlayCircleIcon } from '@heroicons/react/24/solid';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
   const holograms = useHoloStore((state) => state.holograms);
   const userName = localStorage.getItem('user') || 'Diego';
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
   
   return (
-    <div className="flex flex-col gap-8 pb-8 animate-fade-in">
+    <div className="flex flex-col gap-8 pb-8">
       {/* Sección Hero */}
-      <section className="mt-2">
+      <motion.section 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mt-2"
+      >
         <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
           Hola, {userName}
         </h2>
@@ -17,16 +37,20 @@ const Dashboard = () => {
           ¿Listo para dar forma a la realidad hoy?
         </p>
         
-        <button className="relative w-full bg-vitra-cyan text-vitra-graphite rounded-2xl py-4 px-6 font-bold flex items-center justify-center gap-3 hover:bg-cyan-300 transition-all active:scale-95 shadow-[0_0_20px_rgba(0,229,255,0.4)] border border-cyan-300 overflow-hidden group">
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="relative w-full md:w-auto md:min-w-[300px] bg-vitra-cyan text-vitra-graphite rounded-2xl py-4 px-6 font-bold flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,229,255,0.4)] border border-cyan-300 overflow-hidden group"
+        >
           <div className="absolute inset-0 bg-white/20 translate-x-[-100%] skew-x-[-15deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
           <SparklesIcon className="w-5 h-5 text-vitra-graphite" />
           Nuevo Vitra Holograma
-        </button>
-      </section>
+        </motion.button>
+      </motion.section>
 
       {/* Recent Holograms */}
       <section>
-        <div className="flex justify-between items-end mb-4">
+        <div className="flex justify-between items-end mb-6">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             Hologramas Recientes
             <div className="w-2 h-2 rounded-full bg-vitra-cyan shadow-[0_0_8px_rgba(0,229,255,0.8)] animate-pulse"></div>
@@ -36,23 +60,31 @@ const Dashboard = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-5">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {holograms.map((holo) => (
-            <div 
+            <motion.div 
+              variants={itemVariants}
               key={holo.id} 
-              className="group relative bg-vitra-graphite/50 backdrop-blur-sm rounded-3xl p-3 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,255,0.1)] transition-all duration-300 border border-white/5 hover:border-vitra-cyan/30"
+              className="group relative bg-vitra-graphite/50 backdrop-blur-sm rounded-3xl p-3 shadow-sm hover:shadow-[0_0_25px_rgba(0,229,255,0.15)] transition-all duration-300 border border-white/5 hover:border-vitra-cyan/30 flex flex-col"
             >
               {/* Contenedor de Imagen */}
-              <div className="relative w-full h-48 rounded-2xl overflow-hidden mb-3 bg-zinc-800 border border-transparent group-hover:border-vitra-cyan/20 transition-colors duration-300">
+              <div className="relative w-full h-48 md:h-56 lg:h-48 rounded-2xl overflow-hidden mb-3 bg-zinc-800 border border-transparent group-hover:border-vitra-cyan/20 transition-colors duration-300">
                 <img 
                   src={holo.imageUrl} 
                   alt={holo.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
                 
                 {/* Superposición del Botón Play */}
                 <div className="absolute inset-0 bg-vitra-graphite/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                  <PlayCircleIcon className="w-14 h-14 text-vitra-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.6)]" />
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <PlayCircleIcon className="w-14 h-14 text-vitra-cyan drop-shadow-[0_0_10px_rgba(0,229,255,0.6)] cursor-pointer" />
+                  </motion.div>
                 </div>
                 
                 {/* Etiqueta de Estado */}
@@ -63,13 +95,15 @@ const Dashboard = () => {
               </div>
               
               {/* Detalles de la Tarjeta */}
-              <div className="px-2 pb-1">
-                <h4 className="font-bold text-white text-lg leading-tight mb-1">{holo.title}</h4>
-                <p className="text-xs font-medium text-vitra-cyan/50">{holo.createdAt}</p>
+              <div className="px-2 pb-2 flex-1 flex flex-col justify-between">
+                <div>
+                  <h4 className="font-bold text-white text-lg leading-tight mb-1">{holo.title}</h4>
+                  <p className="text-xs font-medium text-vitra-cyan/50">{holo.createdAt}</p>
+                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
     </div>
   );
