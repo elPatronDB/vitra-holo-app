@@ -7,6 +7,15 @@ const Project = () => {
   const holograms = useHoloStore(state => state.holograms);
   const activeHolo = holograms[0]; // Using the first one as default mock
 
+  if (!activeHolo) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-10 py-10 md:py-20 text-center">
+         <h2 className="text-2xl md:text-4xl font-bold text-white uppercase tracking-[0.3em] opacity-50">Proyección Piramidal</h2>
+         <p className="text-zinc-500 max-w-sm">No tienes hologramas en tu galería para proyectar. Crea uno nuevo usando Inteligencia Artificial.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] gap-10 py-10 md:py-20 md:max-w-4xl md:mx-auto">
       <motion.div 

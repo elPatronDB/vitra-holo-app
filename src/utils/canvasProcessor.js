@@ -80,10 +80,10 @@ export const createHolographicLayout = async (baseImageSrc) => {
   ctx.arc(cx, cy, 2.5, 0, 2 * Math.PI);
   ctx.fill();
 
-  // 6. Convert canvas to PNG Blob
+  // 6. Convert canvas to JPEG Blob (vastly smaller file size, fits in Firestore 1MB limit on fallback)
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve(blob);
-    }, 'image/png');
+    }, 'image/jpeg', 0.85);
   });
 };
