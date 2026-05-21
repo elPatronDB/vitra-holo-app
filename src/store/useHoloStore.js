@@ -8,10 +8,14 @@ import {
   addDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
+import { bluetoothService } from '../services/bluetoothService';
 
 export const useHoloStore = create((set, get) => ({
   holograms: [],
   isBluetoothConnected: false,
+  bluetoothDeviceName: null,
+  lumens: 80,
+  screenBrightness: 90,
   unsubscribe: null,
   
   // Subscribe to real-time updates from Firestore for a specific user
@@ -117,3 +121,15 @@ export const useHoloStore = create((set, get) => ({
     console.log(`Sending lumen payload for: ${holo?.title}`);
   }
 }));
+
+// Classic Observer Pattern Subscription
+// This registers a callback that maps Bluetooth Observer state updates back to Zustand.
+bluetoothService.subscribe((bleState) => {
+  useHoloStore.setState({
+    isBluetoothConnected: bleState.isConnected,
+    bluetoothDeviceName: bleState.deviceName,
+    lumens: bleState.lumens,
+    screenBrightness: bleState.screenBrightness,
+  });
+});
+
