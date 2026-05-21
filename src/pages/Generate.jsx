@@ -151,17 +151,11 @@ const Generate = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (activeTab === 'ai') {
-      if (!prompt.trim()) return;
-      processGenerationBackground(true, { prompt: prompt.trim(), selectedStyle });
-      setPrompt('');
-    } else {
-      if (!uploadedFile || !customTitle.trim()) return;
-      processGenerationBackground(false, { filePreview, customTitle: customTitle.trim() });
-      setUploadedFile(null);
-      setFilePreview(null);
-      setCustomTitle('');
-    }
+    if (!uploadedFile || !customTitle.trim()) return;
+    processGenerationBackground(false, { filePreview, customTitle: customTitle.trim() });
+    setUploadedFile(null);
+    setFilePreview(null);
+    setCustomTitle('');
     
     // Redirect instantly to gallery while background process runs
     navigate('/gallery');
@@ -197,90 +191,27 @@ const Generate = () => {
             onSubmit={handleSubmit}
             className="flex flex-col gap-6"
           >
-            {/* Tab Selector */}
-            <div className="flex bg-zinc-950/80 p-1.5 rounded-2xl border border-white/5 mb-2">
+            {/* Tab Selector - AI Disabled Temporarily */}
+            <div className="flex bg-zinc-950/80 p-1.5 rounded-2xl border border-white/5 mb-2 relative overflow-hidden">
               <button
                 type="button"
-                onClick={() => setActiveTab('ai')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
-                  activeTab === 'ai'
-                    ? 'bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold'
-                    : 'text-zinc-400 hover:text-white border border-transparent'
-                }`}
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-zinc-600 bg-zinc-900/40 border border-transparent cursor-not-allowed"
+                title="Deshabilitado temporalmente para evitar consumos no deseados"
               >
-                <SparklesIcon className="w-4 h-4" />
-                Modelar con IA
+                <SparklesIcon className="w-4 h-4 opacity-50" />
+                Modelar con IA (Próximamente)
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('upload')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
-                  activeTab === 'upload'
-                    ? 'bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold'
-                    : 'text-zinc-400 hover:text-white border border-transparent'
-                }`}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold transition-all"
               >
                 <ArrowUpTrayIcon className="w-4 h-4" />
                 Subir mi Imagen
               </button>
             </div>
 
-            {activeTab === 'ai' ? (
-              /* Tab 1: AI Prompt Form */
-              <div className="flex flex-col gap-6">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase tracking-widest">
-                    Descripción del Modelo a Simular
-                  </label>
-                  <textarea 
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full bg-zinc-800/80 border border-white/10 rounded-2xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-vitra-cyan/50 h-32 md:h-40 transition-shadow text-sm"
-                    placeholder="Ej: Una calavera futurista cyberpunk con luces de neón o un automóvil superdeportivo..."
-                    required={activeTab === 'ai'}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-bold text-zinc-400 mb-3 uppercase tracking-widest">
-                    Estilo Visual
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.keys(STYLE_IMAGES).map((style, index) => (
-                      <motion.button 
-                        type="button"
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        key={style} 
-                        onClick={() => setSelectedStyle(style)}
-                        className={`py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider border transition-all duration-300 ${
-                          selectedStyle === style 
-                            ? 'bg-vitra-cyan border-vitra-cyan text-vitra-graphite shadow-[0_0_15px_rgba(0,229,255,0.25)]' 
-                            : 'bg-zinc-800/50 border-white/5 text-zinc-400 hover:border-zinc-700 hover:text-white'
-                        }`}
-                      >
-                        {style}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={!prompt.trim()}
-                  className="w-full mt-4 bg-vitra-cyan text-vitra-graphite font-bold py-4 rounded-2xl shadow-[0_0_20px_rgba(0,229,255,0.3)] transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <SparklesIcon className="w-5 h-5 animate-pulse" />
-                  Iniciar Generación
-                </motion.button>
-              </div>
-            ) : (
-              /* Tab 2: Custom Local Upload */
+            {/* Custom Local Upload Form */}
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">
@@ -357,7 +288,6 @@ const Generate = () => {
                   Iniciar Procesamiento
                 </motion.button>
               </div>
-            )}
           </motion.form>
         </AnimatePresence>
       </motion.div>

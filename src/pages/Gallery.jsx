@@ -46,18 +46,9 @@ const Gallery = () => {
     }
   };
 
-  const handleProject = async (holo) => {
-    if (bleState.isSyncActive) {
-      // Si el proyector remoto está activo, mandarlo para allá
-      await bluetoothService.updateProjectingHolo(holo.title, holo.imageUrl);
-      alert(`Proyectando "${holo.title}" en el dispositivo remoto.`);
-    } else {
-      // Si no, enviar al proyector local o a Settings para activar
-      const confirm = window.confirm("El enlace remoto no está activo. ¿Deseas ir a Ajustes para activarlo?");
-      if (confirm) {
-        navigate('/settings');
-      }
-    }
+  const handleProject = (holo) => {
+    // Navigate to the local Project view with the hologram ID
+    navigate(`/project?id=${holo.id}`);
   };
 
   return (
@@ -110,18 +101,18 @@ const Gallery = () => {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               
-              {/* Action Bar */}
-              <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+              {/* Action Bar (Always visible) */}
+              <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
                 <button
                   onClick={() => handleProject(holo)}
-                  className="bg-vitra-cyan/90 hover:bg-vitra-cyan text-vitra-graphite p-2 rounded-full backdrop-blur-sm shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                  className="bg-vitra-cyan hover:bg-cyan-300 text-vitra-graphite p-2.5 rounded-full backdrop-blur-sm shadow-[0_0_15px_rgba(0,229,255,0.5)] transition-transform hover:scale-110 active:scale-95 flex items-center justify-center"
                   title="Proyectar"
                 >
                   <PlayIcon className="w-4 h-4 ml-0.5" />
                 </button>
                 <button
                   onClick={() => setHoloToDelete(holo)}
-                  className="bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full backdrop-blur-sm shadow-lg transition-transform hover:scale-110 active:scale-95"
+                  className="bg-red-500 hover:bg-red-400 text-white p-2.5 rounded-full backdrop-blur-sm shadow-lg transition-transform hover:scale-110 active:scale-95"
                   title="Eliminar holograma"
                 >
                   <TrashIcon className="w-4 h-4" />

@@ -2,31 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Cog8ToothIcon, 
-  SignalIcon, 
   UserCircleIcon, 
   ShieldCheckIcon,
-  SunIcon,
-  LightBulbIcon,
-  PaintBrushIcon,
-  TrashIcon,
-  BellIcon,
-  ArrowRightOnRectangleIcon,
-  ClipboardDocumentIcon,
   CheckIcon,
-  CpuChipIcon
+  ClipboardDocumentIcon
 } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/useAuthStore';
 import { useHoloStore } from '../store/useHoloStore';
-import { bluetoothService } from '../services/bluetoothService';
 import { auth } from '../config/firebase';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-
-const AVAILABLE_DEVICES = [
-  { id: 'dev-1', name: 'Vitra-Lumen-Box-v1', signal: 98, desc: 'Recomendado (BLE Active)' },
-  { id: 'dev-2', name: 'HoloPyramid-Pro', signal: 85, desc: 'Hardware Piramidal Standard' },
-  { id: 'dev-3', name: 'LumenGlass-X2', signal: 72, desc: 'Dispositivo Óptico de Bajo Consumo' },
-];
 
 const THEMES = [
   { id: 'classic', name: 'Vitra Dark Classic', bg: '#1A1C23', accent: '#00E5FF', desc: 'Grafito oscuro elegante' },
@@ -39,16 +24,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   // Selected Section Tab
-  const [activeTab, setActiveTab] = useState('bluetooth');
-
-  // Bluetooth Local State (Connected to the Observer singleton)
-  const [bleState, setBleState] = useState(bluetoothService.getState());
-  const [bleSubTab, setBleSubTab] = useState('remote'); // 'remote' or 'local'
-  const [copiedLink, setCopiedLink] = useState(false);
-  
-  const [isScanning, setIsScanning] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState(null);
-  const [connectingId, setConnectingId] = useState(null);
+  const [activeTab, setActiveTab] = useState('profile');
 
   // User Profile States
   const [displayName, setDisplayName] = useState(user?.displayName || '');
@@ -65,23 +41,14 @@ const Settings = () => {
   const [autoProject, setAutoProject] = useState(() => localStorage.getItem('pref_auto_project') === 'true');
   const [activeTheme, setActiveTheme] = useState(() => localStorage.getItem('pref_theme') || 'classic');
 
-  // Fetch holograms from useHoloStore to sync the current hologram with the remote proyector
+  // Fetch holograms from useHoloStore
   const holograms = useHoloStore((state) => state.holograms);
-  const activeHolo = holograms[0];
 
   useEffect(() => {
     if (user?.uid && holograms.length === 0) {
       useHoloStore.getState().subscribeHolograms(user.uid);
     }
   }, [user, holograms.length]);
-
-  // Register as an Observer to the Bluetooth Service on mount
-  useEffect(() => {
-    const unsubscribe = bluetoothService.subscribe((state) => {
-      setBleState(state);
-    });
-    return unsubscribe;
-  }, []);
 
   // Sync state values when tabs or store states change
   useEffect(() => {
@@ -119,44 +86,6 @@ const Settings = () => {
       navigator.clipboard.writeText(user.uid);
       setCopiedUid(true);
       setTimeout(() => setCopiedUid(false), 2000);
-    }
-  };
-
-  // Bluetooth Actions
-  const handleCopyLink = (url) => {
-    navigator.clipboard.writeText(url);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
-
-  const handleToggleSync = async () => {
-    if (bleState.isSyncActive) {
-      await bluetoothService.disableFirestoreSync();
-    } else {
-      await bluetoothService.enableFirestoreSync(user.uid, activeHolo);
-    }
-  };
-
-  const handleToggleBluetooth = () => {
-    if (bleState.isConnected) {
-      bluetoothService.disconnect();
-      setSelectedDevice(null);
-    } else {
-      // Prompt scanning
-      setIsScanning(true);
-    }
-  };
-
-  const handleConnectDevice = async (device) => {
-    setConnectingId(device.id);
-    setSelectedDevice(device);
-    try {
-      await bluetoothService.connect(device.name);
-      setIsScanning(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setConnectingId(null);
     }
   };
 
@@ -232,7 +161,7 @@ const Settings = () => {
     <div className="flex flex-col gap-6 pb-20 w-full md:max-w-5xl md:mx-auto">
       <header>
         <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Ajustes</h2>
-        <p className="text-vitra-cyan/60 font-medium">Configura el hardware, lúmenes y tus preferencias de usuario</p>
+        <p className="text-vitra-cyan/60 font-medium">Configura tus preferencias de usuario y cuenta</p>
       </header>
 
       {/* Main Settings Container */}
@@ -241,7 +170,6 @@ const Settings = () => {
         {/* Settings Navigation Menu */}
         <aside className="w-full md:w-64 bg-zinc-900/30 border border-white/5 rounded-3xl p-3 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible">
           {[
-            { id: 'bluetooth', label: 'Conectividad BLE', icon: SignalIcon },
             { id: 'profile', label: 'Mi Perfil', icon: UserCircleIcon },
             { id: 'security', label: 'Seguridad', icon: ShieldCheckIcon },
             { id: 'preferences', label: 'Preferencias', icon: Cog8ToothIcon }
@@ -276,362 +204,6 @@ const Settings = () => {
               transition={{ duration: 0.25 }}
               className="h-full w-full"
             >
-              {/* TAB 1: CONNECTIVITY & BLE OBSERVER */}
-              {activeTab === 'bluetooth' && (
-                <div className="flex flex-col gap-6 animate-fade-in">
-                  <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                      Sincronización y Enlace de Proyector
-                      {(bleState.isConnected || bleState.isSyncActive) && (
-                        <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                      )}
-                    </h3>
-                    <p className="text-zinc-500 text-xs mt-1">
-                      Vincula un segundo dispositivo físico para proyectar o simula la conexión de prismas activos Vitra con el patrón Observer.
-                    </p>
-                  </div>
-
-                  {/* Bluetooth Sub-Tabs */}
-                  <div className="flex gap-2 p-1 bg-zinc-950/40 rounded-2xl border border-white/5 w-full">
-                    <button
-                      onClick={() => setBleSubTab('remote')}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-                        bleSubTab === 'remote'
-                          ? 'bg-vitra-cyan/15 border border-vitra-cyan/30 text-vitra-cyan shadow-[0_0_12px_rgba(0,229,255,0.06)]'
-                          : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
-                      }`}
-                    >
-                      <SignalIcon className="w-4.5 h-4.5" />
-                      Doble Pantalla (Real)
-                    </button>
-                    <button
-                      onClick={() => setBleSubTab('local')}
-                      className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-                        bleSubTab === 'local'
-                          ? 'bg-vitra-cyan/15 border border-vitra-cyan/30 text-vitra-cyan shadow-[0_0_12px_rgba(0,229,255,0.06)]'
-                          : 'text-zinc-500 hover:text-zinc-300 border border-transparent'
-                      }`}
-                    >
-                      <CpuChipIcon className="w-4.5 h-4.5" />
-                      Prisma Local (Simulado)
-                    </button>
-                  </div>
-
-                  {/* SUBTAB 1: DUAL SCREEN REMOTE CONTROL (REAL DEVICE LINK) */}
-                  {bleSubTab === 'remote' && (
-                    <div className="flex flex-col gap-5">
-                      <div className="bg-zinc-950/60 rounded-3xl border border-white/5 p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 text-left">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                            bleState.isSyncActive ? 'bg-vitra-cyan/10 border border-vitra-cyan/20' : 'bg-zinc-800'
-                          }`}>
-                            <SignalIcon className={`w-6 h-6 ${bleState.isSyncActive ? 'text-vitra-cyan animate-pulse' : 'text-zinc-500'}`} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-white">Enlace de Proyector Inalámbrico (Doble Pantalla)</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">
-                              {bleState.isSyncActive 
-                                ? `Sincronización en vivo con ID: ${user.uid.substring(0, 8)}...` 
-                                : 'Desconectado - Haz que tu proyector actúe como dispositivo.'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={handleToggleSync}
-                          className={`btn rounded-2xl font-bold uppercase tracking-wider text-xs px-6 py-3 h-auto transition-all ${
-                            bleState.isSyncActive
-                              ? 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30'
-                              : 'bg-vitra-cyan text-vitra-graphite border border-cyan-300 hover:scale-102 hover:shadow-[0_0_15px_rgba(0,229,255,0.25)]'
-                          }`}
-                        >
-                          {bleState.isSyncActive ? 'Desactivar Enlace' : 'Iniciar Enlace'}
-                        </button>
-                      </div>
-
-                      {/* Sync details, QR Code and public link */}
-                      {bleState.isSyncActive && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex flex-col md:flex-row gap-6 p-6 border border-vitra-cyan/20 bg-vitra-cyan/5 rounded-3xl items-center"
-                        >
-                          {/* QR Code container */}
-                          <div className="flex flex-col items-center gap-2 shrink-0">
-                            <div className="p-3 bg-white rounded-2xl shadow-xl border border-vitra-cyan/40 select-none">
-                              <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                                  `${window.location.origin}/project-remote?syncId=${user.uid}`
-                                )}&color=0c0f1d&bgcolor=ffffff`}
-                                alt="Remote Screen Connection QR"
-                                className="w-40 h-40 object-contain rounded-lg"
-                                draggable="false"
-                              />
-                            </div>
-                            <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-extrabold">
-                              Escanear con Cámara
-                            </span>
-                          </div>
-
-                          {/* Link and instructions */}
-                          <div className="flex-1 flex flex-col gap-4 text-center md:text-left">
-                            <div>
-                              <div className="flex items-center justify-center md:justify-start gap-2 text-vitra-cyan">
-                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Listo para Proyección</span>
-                              </div>
-                              <h4 className="text-base font-extrabold text-white mt-1">Conecta el Proyector Remoto</h4>
-                              <p className="text-xs text-zinc-500 leading-relaxed max-w-sm mt-1">
-                                Escanea el código QR de arriba con la cámara nativa de tu dispositivo proyector. Se abrirá la pantalla holográfica al instante, sin requerir la aplicación instalada ni iniciar sesión.
-                              </p>
-                            </div>
-
-                            {/* Direct URL copy action */}
-                            <div className="flex flex-col gap-1.5 w-full">
-                              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">
-                                Enlace Directo de Proyección
-                              </span>
-                              <div className="flex gap-2 w-full">
-                                <input
-                                  type="text"
-                                  readOnly
-                                  value={`${window.location.origin}/project-remote?syncId=${user.uid}`}
-                                  className="flex-1 bg-zinc-950/60 border border-white/5 rounded-xl p-3 text-xs font-mono text-zinc-400 focus:outline-none select-all"
-                                />
-                                <button
-                                  onClick={() => handleCopyLink(`${window.location.origin}/project-remote?syncId=${user.uid}`)}
-                                  className="btn rounded-xl bg-zinc-900 border border-white/10 text-white hover:bg-zinc-800 p-3 h-auto min-h-0 flex items-center justify-center"
-                                  title="Copiar Enlace"
-                                >
-                                  {copiedLink ? <CheckIcon className="w-4 h-4 text-emerald-400" /> : <ClipboardDocumentIcon className="w-4 h-4" />}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Real-time slider controls connected directly to the Firestore Sync */}
-                      {bleState.isSyncActive && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.98 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="flex flex-col gap-5 border border-emerald-500/20 bg-emerald-500/5 rounded-3xl p-5"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
-                              Panel de Control en Vivo del Proyector
-                            </h4>
-                          </div>
-
-                          {/* Lumen (Projection Power) Adjuster */}
-                          <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <LightBulbIcon className="w-4 h-4 text-vitra-cyan" />
-                                Lúmenes de Proyección (Intensidad de Luz)
-                              </label>
-                              <span className="text-sm font-extrabold text-vitra-cyan drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                                {bleState.lumens}%
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={bleState.lumens}
-                              onChange={(e) => bluetoothService.setLumens(e.target.value)}
-                              className="range range-accent range-sm cursor-pointer"
-                            />
-                            <span className="text-[10px] text-zinc-500 italic">
-                              Ajusta la intensidad física de los lúmenes reflejados para optimizar el contraste según la luz ambiental.
-                            </span>
-                          </div>
-
-                          {/* Display Brightness Adjuster */}
-                          <div className="flex flex-col gap-2 mt-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <SunIcon className="w-4 h-4 text-amber-400" />
-                                Calibración de Brillo de Pantalla del Proyector
-                              </label>
-                              <span className="text-sm font-extrabold text-amber-400 drop-shadow-[0_0_8px_rgba(251,189,35,0.4)]">
-                                {bleState.screenBrightness}%
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={bleState.screenBrightness}
-                              onChange={(e) => bluetoothService.setScreenBrightness(e.target.value)}
-                              className="range range-warning range-sm cursor-pointer"
-                            />
-                            <span className="text-[10px] text-zinc-500 italic">
-                              Ajusta el nivel de emisión de brillo de la pantalla móvil remota para evitar calentamiento.
-                            </span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* SUBTAB 2: LOCAL SIMULATED BLE PRISM HARDWARE */}
-                  {bleSubTab === 'local' && (
-                    <div className="flex flex-col gap-5">
-                      <div className="bg-zinc-950/60 rounded-3xl border border-white/5 p-5 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                            bleState.isConnected && !bleState.isSyncActive ? 'bg-vitra-cyan/10 border border-vitra-cyan/20' : 'bg-zinc-800'
-                          }`}>
-                            <SignalIcon className={`w-5 h-5 ${bleState.isConnected && !bleState.isSyncActive ? 'text-vitra-cyan animate-pulse' : 'text-zinc-500'}`} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-white">Sensor y Emisor Lumínico Local</p>
-                            <p className="text-[10px] text-zinc-500">
-                              {bleState.isConnected && !bleState.isSyncActive ? `Vinculado a: ${bleState.deviceName}` : 'Hardware Desconectado'}
-                            </p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={handleToggleBluetooth}
-                          disabled={bleState.isSyncActive}
-                          className={`btn btn-xs rounded-xl font-bold uppercase tracking-wider ${
-                            bleState.isSyncActive
-                              ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed border-transparent'
-                              : bleState.isConnected && !bleState.isSyncActive
-                                ? 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30' 
-                                : 'bg-vitra-cyan text-vitra-graphite border border-cyan-300 hover:scale-105'
-                          }`}
-                        >
-                          {bleState.isConnected && !bleState.isSyncActive ? 'Desconectar' : 'Conectar'}
-                        </button>
-                      </div>
-
-                      {bleState.isSyncActive && (
-                        <p className="text-xs text-amber-400 font-medium italic text-center bg-amber-400/5 border border-amber-400/10 rounded-2xl p-3.5">
-                          * Tienes activo el Enlace Inalámbrico de Doble Pantalla. Desactiva el modo Doble Pantalla para poder enlazar prismas simulados locales.
-                        </p>
-                      )}
-
-                      {/* Dynamic Radar Scan Simulation */}
-                      {isScanning && !bleState.isConnected && !bleState.isSyncActive && (
-                        <motion.div 
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          className="border border-white/5 rounded-3xl bg-zinc-950/40 p-6 flex flex-col items-center justify-center gap-6 overflow-hidden relative"
-                        >
-                          {/* Radar Pulse Visuals */}
-                          <div className="relative w-28 h-28 flex items-center justify-center">
-                            <div className="absolute inset-0 rounded-full border-2 border-vitra-cyan/5 animate-[ping_2.5s_infinite]" />
-                            <div className="absolute inset-3 rounded-full border-2 border-vitra-cyan/15 animate-[ping_2s_infinite]" />
-                            <div className="absolute inset-6 rounded-full border-2 border-vitra-cyan/30 animate-[ping_1.5s_infinite]" />
-                            <div className="w-10 h-10 rounded-full bg-vitra-cyan/10 border border-vitra-cyan/40 flex items-center justify-center z-10 animate-pulse">
-                              <CpuChipIcon className="w-5 h-5 text-vitra-cyan" />
-                            </div>
-                          </div>
-                          
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-white animate-pulse">Escaneando señales BLE...</p>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">Asegúrate de que tu prisma holográfico esté encendido y en modo emparejamiento.</p>
-                          </div>
-
-                          {/* BLE Devices Found */}
-                          <div className="w-full flex flex-col gap-2 mt-2">
-                            {AVAILABLE_DEVICES.map(device => {
-                              const isConnecting = connectingId === device.id;
-                              return (
-                                <motion.button
-                                  whileHover={{ scale: 1.01 }}
-                                  whileTap={{ scale: 0.99 }}
-                                  key={device.id}
-                                  onClick={() => handleConnectDevice(device)}
-                                  disabled={connectingId !== null}
-                                  className="w-full bg-zinc-900/60 hover:bg-zinc-800 border border-white/5 rounded-2xl p-3.5 flex items-center justify-between text-left transition-colors"
-                                >
-                                  <div>
-                                    <p className="text-xs font-bold text-white">{device.name}</p>
-                                    <p className="text-[10px] text-zinc-500 mt-0.5">{device.desc}</p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-[10px] text-vitra-cyan font-semibold">Signal: {device.signal}%</span>
-                                    <span className="btn btn-xs rounded-xl bg-vitra-cyan/10 border border-vitra-cyan/20 text-vitra-cyan font-bold uppercase tracking-wider text-[9px] px-3.5 py-1.5 h-auto">
-                                      {isConnecting ? 'Vinculando...' : 'Vincular'}
-                                    </span>
-                                  </div>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {/* Dynamic Hardware Controls: Sliders connected directly to the Observer Subject */}
-                      {bleState.isConnected && !bleState.isSyncActive && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.98 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="flex flex-col gap-5 border border-emerald-500/20 bg-emerald-500/5 rounded-3xl p-5"
-                        >
-                          <div className="flex items-center gap-2">
-                            <CpuChipIcon className="w-5 h-5 text-emerald-400" />
-                            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Sincronización Local Activa</h4>
-                          </div>
-
-                          {/* Lumen (Projection Power) Adjuster */}
-                          <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <LightBulbIcon className="w-4 h-4 text-vitra-cyan" />
-                                Lúmenes de Proyección (Intensidad de Luz)
-                              </label>
-                              <span className="text-sm font-extrabold text-vitra-cyan drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]">
-                                {bleState.lumens}%
-                              </span>
-                            </div>
-                            <input 
-                              type="range" 
-                              min="0" 
-                              max="100" 
-                              value={bleState.lumens} 
-                              onChange={(e) => bluetoothService.setLumens(e.target.value)}
-                              className="range range-accent range-sm cursor-pointer" 
-                            />
-                            <span className="text-[10px] text-zinc-500 italic">
-                              Ajusta la intensidad física de los lúmenes reflejados para optimizar el contraste según la luz ambiental.
-                            </span>
-                          </div>
-
-                          {/* Display Brightness Adjuster */}
-                          <div className="flex flex-col gap-2 mt-2">
-                            <div className="flex justify-between items-center">
-                              <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <SunIcon className="w-4 h-4 text-amber-400" />
-                                Calibración de Brillo de Pantalla
-                              </label>
-                              <span className="text-sm font-extrabold text-amber-400 drop-shadow-[0_0_8px_rgba(251,189,35,0.4)]">
-                                {bleState.screenBrightness}%
-                              </span>
-                            </div>
-                            <input 
-                              type="range" 
-                              min="0" 
-                              max="100" 
-                              value={bleState.screenBrightness} 
-                              onChange={(e) => bluetoothService.setScreenBrightness(e.target.value)}
-                              className="range range-warning range-sm cursor-pointer" 
-                            />
-                            <span className="text-[10px] text-zinc-500 italic">
-                              Ajusta el nivel de emisión de brillo de la pantalla móvil. Útil para evitar el calentamiento del panel del prisma.
-                            </span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* TAB 2: USER PROFILE */}
               {activeTab === 'profile' && (

@@ -10,7 +10,9 @@
  * @returns {Promise<Blob>} A promise resolving to a PNG Blob of the composed layout.
  */
 export const createHolographicLayout = async (baseImageSrc) => {
-  const MAX_SIZE = 1024;
+  const CANVAS_SIZE = 1024;
+  const HALF_SIZE = CANVAS_SIZE / 2;
+  const IMG_MAX_SIZE = CANVAS_SIZE / 3.5; // Slightly smaller to fit well
 
   // 1. Load the source image
   const img = new Image();
@@ -26,30 +28,55 @@ export const createHolographicLayout = async (baseImageSrc) => {
   let width = img.width;
   let height = img.height;
 
-  if (width > MAX_SIZE || height > MAX_SIZE) {
+  if (width > IMG_MAX_SIZE || height > IMG_MAX_SIZE) {
     if (width > height) {
-      height = (height / width) * MAX_SIZE;
-      width = MAX_SIZE;
+      height = (height / width) * IMG_MAX_SIZE;
+      width = IMG_MAX_SIZE;
     } else {
-      width = (width / height) * MAX_SIZE;
-      height = MAX_SIZE;
+      width = (width / height) * IMG_MAX_SIZE;
+      height = IMG_MAX_SIZE;
     }
   }
 
-  // Create canvas strictly for the scaled image (no fixed black background)
+  // Create canvas strictly for the 4-sided layout
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = CANVAS_SIZE;
+  canvas.height = CANVAS_SIZE;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
     throw new Error("Could not acquire 2D canvas context");
   }
 
-  // Draw the image exactly as it is (preserves transparency)
-  ctx.drawImage(img, 0, 0, width, height);
+  // Pitch black background is strictly required for holographic pyramids
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  // Convert canvas to WEBP Blob (supports transparency, excellent compression)
+  // Helper to draw the image rotated at a specific anchor point
+  const drawRotated = (rotationDegrees, x, y) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate((rotationDegrees * Math.PI) / 180);
+    // Draw centered on the translated point
+    ctx.drawImage(img, -width / 2, -height / 2, width, height);
+    ctx.restore();
+  };
+
+  const offset = CANVAS_SIZE / 5.5; // Distance from the edges
+
+  // Top Face (Top pointing down)
+  drawRotated(180, HALF_SIZE, offset);
+  
+  // Bottom Face (Top pointing up)
+  drawRotated(0, HALF_SIZE, CANVAS_SIZE - offset);
+  
+  // Left Face (Top pointing right)
+  drawRotated(90, offset, HALF_SIZE);
+  
+  // Right Face (Top pointing left)
+  drawRotated(-90, CANVAS_SIZE - offset, HALF_SIZE);
+
+  // Convert canvas to WEBP Blob
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve(blob);
