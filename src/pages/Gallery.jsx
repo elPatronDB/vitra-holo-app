@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useHoloStore } from '../store/useHoloStore';
-import { PhotoIcon, SparklesIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { bluetoothService } from '../services/bluetoothService';
+import { PhotoIcon, SparklesIcon, TrashIcon, ExclamationTriangleIcon, PlayIcon } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Gallery = () => {
   const { holograms, deleteHologram } = useHoloStore();
   const [holoToDelete, setHoloToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const navigate = useNavigate();
+  const [bleState, setBleState] = useState(bluetoothService.getState());
+
+  useEffect(() => {
+    const unsubscribe = bluetoothService.subscribe((state) => {
+      setBleState(state);
+    });
+    return unsubscribe;
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -33,6 +43,20 @@ const Gallery = () => {
       alert("Hubo un problema al eliminar el holograma.");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleProject = async (holo) => {
+    if (bleState.isSyncActive) {
+      // Si el proyector remoto está activo, mandarlo para allá
+      await bluetoothService.updateProjectingHolo(holo.title, holo.imageUrl);
+      alert(`Proyectando "${holo.title}" en el dispositivo remoto.`);
+    } else {
+      // Si no, enviar al proyector local o a Settings para activar
+      const confirm = window.confirm("El enlace remoto no está activo. ¿Deseas ir a Ajustes para activarlo?");
+      if (confirm) {
+        navigate('/settings');
+      }
     }
   };
 
@@ -86,8 +110,15 @@ const Gallery = () => {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               
-              {/* Top Action Bar (Trash) */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {/* Action Bar */}
+              <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                <button
+                  onClick={() => handleProject(holo)}
+                  className="bg-vitra-cyan/90 hover:bg-vitra-cyan text-vitra-graphite p-2 rounded-full backdrop-blur-sm shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                  title="Proyectar"
+                >
+                  <PlayIcon className="w-4 h-4 ml-0.5" />
+                </button>
                 <button
                   onClick={() => setHoloToDelete(holo)}
                   className="bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full backdrop-blur-sm shadow-lg transition-transform hover:scale-110 active:scale-95"
