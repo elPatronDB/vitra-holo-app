@@ -1,10 +1,18 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { HomeIcon, SparklesIcon, Square3Stack3DIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { HomeIcon, SparklesIcon, Square3Stack3DIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { HomeIcon as HomeSolid, SparklesIcon as SparklesSolid, Square3Stack3DIcon as StackSolid, Cog6ToothIcon as CogSolid } from '@heroicons/react/24/solid';
 import { AnimatePresence, motion } from 'framer-motion';
+import useAuthStore from '../../store/useAuthStore';
 
 const AppShell = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   const navItems = [
     { path: '/', label: 'Inicio', OutlineIcon: HomeIcon, SolidIcon: HomeSolid },
@@ -14,12 +22,14 @@ const AppShell = () => {
     { path: '/settings', label: 'Ajustes', OutlineIcon: Cog6ToothIcon, SolidIcon: CogSolid },
   ];
 
+  const userPhoto = user?.photoURL || `https://api.dicebear.com/7.x/notionists/svg?seed=${user?.uid || 'Felix'}`;
+  const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario';
+
   return (
     <div className="min-h-screen bg-zinc-950 flex justify-center selection:bg-white selection:text-black">
-      {/* Container responds to md to switch from mobile app view to full web view */}
       <div className="w-full md:max-w-7xl bg-base-100 h-screen relative flex flex-col md:flex-row overflow-hidden shadow-2xl md:shadow-none">
         
-        {/* Desktop Sidebar (Hidden on mobile) */}
+        {/* Desktop Sidebar */}
         <aside className="hidden md:flex flex-col w-64 glass-effect border-r border-white/5 relative z-50">
           <div className="p-6 flex items-center gap-3">
             <img src="/vitra_logo.png" alt="Vitra Logo" className="w-10 h-10 object-contain" />
@@ -35,30 +45,24 @@ const AppShell = () => {
                 if (item.isAction) {
                   return (
                     <li key={item.path} className="mt-8 mb-4">
-                      <Link 
-                        to={item.path}
-                        className="flex flex-col items-center group"
-                      >
-                        <motion.div 
+                      <Link to={item.path} className="flex flex-col items-center group">
+                        <motion.div
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="w-20 h-20 rounded-full bg-vitra-cyan shadow-[0_0_20px_rgba(0,229,255,0.5)] border-4 border-vitra-graphite flex items-center justify-center overflow-hidden p-4"
                         >
                           <img src="/vitra_logo.png" alt="Proyectar" className="w-full h-full object-contain brightness-0 invert" />
                         </motion.div>
-                        <span className="text-sm mt-3 font-bold text-vitra-cyan uppercase tracking-tighter">
-                          {item.label}
-                        </span>
+                        <span className="text-sm mt-3 font-bold text-vitra-cyan uppercase tracking-tighter">{item.label}</span>
                       </Link>
                     </li>
                   );
                 }
-
                 const Icon = isActive ? item.SolidIcon : item.OutlineIcon;
                 return (
                   <li key={item.path}>
-                    <Link 
-                      to={item.path} 
+                    <Link
+                      to={item.path}
                       className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 ease-in-out ${isActive ? 'bg-vitra-cyan/10 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.1)]' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}
                     >
                       <Icon className={`w-6 h-6 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
@@ -69,26 +73,35 @@ const AppShell = () => {
               })}
             </ul>
           </nav>
-          
+
           <div className="p-6 border-t border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="avatar">
-                <div className="w-10 rounded-full ring ring-vitra-cyan/30">
-                  <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="Profile Avatar" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="avatar flex-shrink-0">
+                  <div className="w-10 rounded-full ring ring-vitra-cyan/30">
+                    <img src={userPhoto} alt="Profile" referrerPolicy="no-referrer" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{userName}</p>
+                  <p className="text-xs text-zinc-500 truncate">{user?.email}</p>
                 </div>
               </div>
-              <div>
-                <p className="text-sm font-bold text-white">Diego</p>
-                <p className="text-xs text-zinc-500">Pro User</p>
-              </div>
+              <button
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="text-zinc-500 hover:text-red-400 transition-colors flex-shrink-0 p-1 rounded-lg hover:bg-red-400/10"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* Main Content Area */}
+        {/* Main content */}
         <div className="flex-1 flex flex-col relative w-full overflow-hidden">
-          
-          {/* Mobile Header (Hidden on Desktop) */}
+
+          {/* Mobile Header */}
           <header className="md:hidden glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <img src="/vitra_logo.png" alt="Vitra Logo" className="w-10 h-10 object-contain" />
@@ -96,9 +109,18 @@ const AppShell = () => {
                 Vitra Holo
               </h1>
             </div>
-            <div className="avatar">
-              <div className="w-10 rounded-full ring ring-vitra-cyan/30 ring-offset-2 ring-offset-vitra-graphite shadow-[0_0_10px_rgba(0,229,255,0.2)]">
-                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="Profile Avatar" />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-xl hover:bg-red-400/10"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              </button>
+              <div className="avatar">
+                <div className="w-9 rounded-full ring ring-vitra-cyan/30 ring-offset-2 ring-offset-vitra-graphite shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                  <img src={userPhoto} alt="Profile" referrerPolicy="no-referrer" />
+                </div>
               </div>
             </div>
           </header>
@@ -118,39 +140,32 @@ const AppShell = () => {
             </AnimatePresence>
           </main>
 
-          {/* Mobile Bottom Navigation (Hidden on Desktop) */}
+          {/* Mobile Bottom Navigation */}
           <nav className="md:hidden glass-effect sticky bottom-0 w-full pb-safe pt-2 px-4 border-t border-white/5 z-50">
             <ul className="flex justify-between items-center mb-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
-                
                 if (item.isAction) {
                   return (
                     <li key={item.path} className="-mt-12">
-                      <Link 
-                        to={item.path}
-                        className="flex flex-col items-center group"
-                      >
-                        <motion.div 
+                      <Link to={item.path} className="flex flex-col items-center group">
+                        <motion.div
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           className="w-16 h-16 rounded-full bg-vitra-cyan shadow-[0_0_20px_rgba(0,229,255,0.5)] border-4 border-vitra-graphite flex items-center justify-center overflow-hidden p-3"
                         >
                           <img src="/vitra_logo.png" alt="Proyectar" className="w-full h-full object-contain brightness-0 invert" />
                         </motion.div>
-                        <span className="text-[10px] mt-1 font-bold text-vitra-cyan uppercase tracking-tighter">
-                          {item.label}
-                        </span>
+                        <span className="text-[10px] mt-1 font-bold text-vitra-cyan uppercase tracking-tighter">{item.label}</span>
                       </Link>
                     </li>
                   );
                 }
-
                 const Icon = isActive ? item.SolidIcon : item.OutlineIcon;
                 return (
                   <li key={item.path}>
-                    <Link 
-                      to={item.path} 
+                    <Link
+                      to={item.path}
                       className={`flex flex-col items-center p-2 rounded-2xl transition-all duration-300 ease-in-out ${isActive ? 'text-vitra-cyan' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
                       <div className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ${isActive ? 'bg-vitra-cyan/10 shadow-[0_0_15px_rgba(0,229,255,0.15)]' : 'bg-transparent'}`}>
@@ -165,7 +180,6 @@ const AppShell = () => {
               })}
             </ul>
           </nav>
-
         </div>
       </div>
     </div>

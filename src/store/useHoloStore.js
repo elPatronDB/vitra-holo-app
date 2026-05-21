@@ -1,40 +1,112 @@
 import { create } from 'zustand';
+import { db } from '../config/firebase';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  addDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
-// Implementing the Observer pattern via Zustand for global state
 export const useHoloStore = create((set, get) => ({
-  holograms: [
-    {
-      id: 'obj-01',
-      title: 'Cráneo de Cristal 3D',
-      imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=800',
-      status: 'Listo',
-      createdAt: 'Hace 2 horas',
-    },
-    {
-      id: 'obj-02',
-      title: 'Reloj Mecánico Virtual',
-      imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800',
-      status: 'Procesando',
-      createdAt: 'Hace 5 horas',
-    },
-    {
-      id: 'obj-03',
-      title: 'Dron Miniatura Neo',
-      imageUrl: 'https://images.unsplash.com/photo-1524143986875-3b098d78b363?auto=format&fit=crop&q=80&w=800',
-      status: 'Listo',
-      createdAt: 'Ayer',
-    },
-  ],
+  holograms: [],
   isBluetoothConnected: false,
+  unsubscribe: null,
   
-  // Actions
-  addHologram: (hologram) => set((state) => ({ 
-    holograms: [hologram, ...state.holograms] 
-  })),
+  // Subscribe to real-time updates from Firestore for a specific user
+  subscribeHolograms: (userId) => {
+    // Unsubscribe from any previous query if active
+    const currentUnsubscribe = get().unsubscribe;
+    if (currentUnsubscribe) {
+      currentUnsubscribe();
+    }
+
+    if (!userId || !db) {
+      set({ holograms: [], unsubscribe: null });
+      return;
+    }
+
+    // Query holograms for the logged-in user.
+    // We do NOT use orderBy('createdAt') here to avoid requiring composite indexes in the Firebase console,
+    // which simplifies setup. Instead, we sort the results in memory.
+    const q = query(
+      collection(db, 'holograms'),
+      where('userId', '==', userId)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const hologramsList = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        
+        // Format the date/time nicely
+        let friendlyTime = 'Reciente';
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          const date = data.createdAt.toDate();
+          const diffMs = new Date() - date;
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMs / 3600000);
+
+          if (diffMins < 1) friendlyTime = 'Hace un momento';
+          else if (diffMins < 60) friendlyTime = `Hace ${diffMins} min`;
+          else if (diffHours < 24) friendlyTime = `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+          else friendlyTime = date.toLocaleDateString();
+        }
+
+        return {
+          id: doc.id,
+          ...data,
+          createdAtFriendly: friendlyTime
+        };
+      });
+
+      // Sort in-memory: newest first
+      hologramsList.sort((a, b) => {
+        const timeA = a.createdAt?.toDate?.()?.getTime() || Date.now();
+        const timeB = b.createdAt?.toDate?.()?.getTime() || Date.now();
+        return timeB - timeA;
+      });
+
+      set({ holograms: hologramsList });
+    }, (error) => {
+      console.error("Error listening to holograms:", error);
+    });
+
+    set({ unsubscribe });
+  },
+
+  // Unsubscribe and reset state
+  unsubscribeHolograms: () => {
+    const currentUnsubscribe = get().unsubscribe;
+    if (currentUnsubscribe) {
+      currentUnsubscribe();
+    }
+    set({ holograms: [], unsubscribe: null });
+  },
+  
+  // Add a hologram to Firestore (works offline natively using IndexedDB)
+  addHologram: async (hologramData, userId) => {
+    if (!userId || !db) {
+      console.error("User ID or Firestore instance missing");
+      return;
+    }
+    try {
+      await addDoc(collection(db, 'holograms'), {
+        title: hologramData.title,
+        imageUrl: hologramData.imageUrl,
+        status: hologramData.status || 'Listo',
+        userId: userId,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error adding hologram:", error);
+      throw error;
+    }
+  },
   
   setBluetoothStatus: (status) => set({ isBluetoothConnected: status }),
   
-  // Future method for "Payloads de Lúmenes"
+  // Payloads de Lúmenes
   sendLumenPayload: (id) => {
     const state = get();
     const holo = state.holograms.find(h => h.id === id);
