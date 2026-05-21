@@ -331,8 +331,8 @@ const Settings = () => {
                             <p className="text-sm font-bold text-white">Enlace de Proyector Inalámbrico (Doble Pantalla)</p>
                             <p className="text-[10px] text-zinc-500 mt-0.5">
                               {bleState.isSyncActive 
-                                ? `Enlace activo - ID: ${user.uid.substring(0, 10)}...`
-                                : 'Desconectado - Haz que tu segundo teléfono actúe como prisma.'}
+                                ? `Sincronización en vivo con ID: ${user.uid.substring(0, 8)}...` 
+                                : 'Desconectado - Haz que tu proyector actúe como dispositivo.'}
                             </p>
                           </div>
                         </div>
@@ -380,9 +380,9 @@ const Settings = () => {
                                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
                                 <span className="text-xs font-bold uppercase tracking-wider">Listo para Proyección</span>
                               </div>
-                              <h4 className="text-base font-extrabold text-white mt-1">Conecta el Segundo Teléfono</h4>
-                              <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
-                                Escanea el código QR de arriba con la cámara nativa de tu otro teléfono. Se abrirá la pantalla holográfica del proyector al instante, sin requerir la aplicación instalada ni iniciar sesión.
+                              <h4 className="text-base font-extrabold text-white mt-1">Conecta el Proyector Remoto</h4>
+                              <p className="text-xs text-zinc-500 leading-relaxed max-w-sm mt-1">
+                                Escanea el código QR de arriba con la cámara nativa de tu dispositivo proyector. Se abrirá la pantalla holográfica al instante, sin requerir la aplicación instalada ni iniciar sesión.
                               </p>
                             </div>
 

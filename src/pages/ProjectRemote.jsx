@@ -63,7 +63,7 @@ const ProjectRemote = () => {
         </div>
         <h2 className="text-2xl font-black uppercase tracking-[0.2em] text-red-400">Enlace Ausente</h2>
         <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
-          Para utilizar este teléfono como proyector secundario, debes escanear el código QR generado en la sección de Ajustes desde el dispositivo controlador.
+          Para utilizar este dispositivo como proyector, debes escanear el código QR generado en la sección de Ajustes desde el dispositivo controlador.
         </p>
       </div>
     );
@@ -88,7 +88,7 @@ const ProjectRemote = () => {
         <div className="flex flex-col gap-2 z-10">
           <h3 className="text-xl font-bold uppercase tracking-[0.25em] text-white">Esperando Conexión</h3>
           <p className="text-zinc-500 text-xs max-w-xs leading-relaxed">
-            Sincronizando con el teléfono controlador. Por favor, mantén esta pestaña abierta.
+            Sincronizando con el dispositivo controlador. Por favor, mantén esta pestaña abierta.
           </p>
         </div>
 
@@ -139,53 +139,14 @@ const ProjectRemote = () => {
         </button>
       </motion.div>
 
-      {/* Projection Area (4-way symmetry optimized for plastic pyramids) */}
-      <div className="relative w-80 h-80 sm:w-[450px] sm:h-[450px] md:w-[500px] md:h-[500px] flex items-center justify-center">
-        
-        {/* Top View (Rotated 180 deg) */}
-        <div className="absolute top-0 rotate-180 flex flex-col items-center">
-          <img 
-            src={syncData.imageUrl} 
-            alt="top" 
-            style={projectionStyle}
-            className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 object-cover rounded-2xl shadow-[0_0_25px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-        
-        {/* Bottom View (Facing normal) */}
-        <div className="absolute bottom-0 flex flex-col items-center">
-          <img 
-            src={syncData.imageUrl} 
-            alt="bottom" 
-            style={projectionStyle}
-            className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 object-cover rounded-2xl shadow-[0_0_25px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Left View (Rotated -90 deg) */}
-        <div className="absolute left-0 -rotate-90 flex flex-col items-center">
-          <img 
-            src={syncData.imageUrl} 
-            alt="left" 
-            style={projectionStyle}
-            className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 object-cover rounded-2xl shadow-[0_0_25px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Right View (Rotated 90 deg) */}
-        <div className="absolute right-0 rotate-90 flex flex-col items-center">
-          <img 
-            src={syncData.imageUrl} 
-            alt="right" 
-            style={projectionStyle}
-            className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 object-cover rounded-2xl shadow-[0_0_25px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Central calibration target / Dashed Ring */}
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-vitra-cyan/40 flex items-center justify-center animate-[pulse_2.5s_ease-in-out_infinite] z-20 bg-black">
-          <div className="w-3 h-3 bg-vitra-cyan rounded-full shadow-[0_0_10px_rgba(0,229,255,0.8)]" />
-        </div>
+      {/* Projection Area (Single central image) */}
+      <div className="relative w-full h-full max-w-3xl max-h-3xl flex items-center justify-center p-8">
+        <img 
+          src={syncData.imageUrl} 
+          alt="holograma" 
+          style={projectionStyle}
+          className="w-full h-full object-contain drop-shadow-[0_0_35px_rgba(0,229,255,0.4)]" 
+        />
       </div>
 
       {/* Subtle Live Feedback Indicator */}

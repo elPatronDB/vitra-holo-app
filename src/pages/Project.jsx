@@ -22,7 +22,7 @@ const Project = () => {
   if (!activeHolo) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-10 py-10 md:py-20 text-center">
-         <h2 className="text-2xl md:text-4xl font-bold text-white uppercase tracking-[0.3em] opacity-50">Proyección Piramidal</h2>
+         <h2 className="text-2xl md:text-4xl font-bold text-white uppercase tracking-[0.3em] opacity-50">Proyección Holográfica</h2>
          <p className="text-zinc-500 max-w-sm">No tienes hologramas en tu galería para proyectar. Crea uno nuevo usando Inteligencia Artificial o subiendo un archivo.</p>
       </div>
     );
@@ -42,61 +42,23 @@ const Project = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h2 className="text-2xl md:text-4xl font-bold text-white uppercase tracking-[0.3em] drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">Proyección Piramidal</h2>
-        <p className="text-vitra-cyan/60 text-sm md:text-base mt-2 font-medium">Coloca tu pirámide en el centro de la pantalla</p>
+        <h2 className="text-2xl md:text-4xl font-bold text-white uppercase tracking-[0.3em] drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]">Proyección Holográfica</h2>
+        <p className="text-vitra-cyan/60 text-sm md:text-base mt-2 font-medium">Visualización inmersiva en pantalla completa</p>
       </motion.div>
 
-      {/* Projection Area (4-way view) */}
+      {/* Projection Area (Single View) */}
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
-        className="relative w-80 h-80 md:w-[480px] md:h-[480px] flex items-center justify-center bg-black/60 rounded-[40px] border border-white/5 shadow-2xl p-4"
+        className="relative w-full h-[40vh] md:h-[50vh] max-w-3xl flex items-center justify-center bg-black/40 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden p-6"
       >
-        {/* Top View (Rotated 180 deg) */}
-        <div className="absolute top-4 rotate-180 flex flex-col items-center">
-          <img 
-            src={activeHolo.imageUrl} 
-            alt="top" 
-            style={projectionStyle}
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-        
-        {/* Bottom View (Facing normal) */}
-        <div className="absolute bottom-4 flex flex-col items-center">
-          <img 
-            src={activeHolo.imageUrl} 
-            alt="bottom" 
-            style={projectionStyle}
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Left View (Rotated -90 deg) */}
-        <div className="absolute left-4 -rotate-90 flex flex-col items-center">
-          <img 
-            src={activeHolo.imageUrl} 
-            alt="left" 
-            style={projectionStyle}
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Right View (Rotated 90 deg) */}
-        <div className="absolute right-4 rotate-90 flex flex-col items-center">
-          <img 
-            src={activeHolo.imageUrl} 
-            alt="right" 
-            style={projectionStyle}
-            className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.25)]" 
-          />
-        </div>
-
-        {/* Center Guide & Anillo de Calibración */}
-        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-dashed border-vitra-cyan/40 flex items-center justify-center animate-[pulse_2s_ease-in-out_infinite] z-10 bg-zinc-950/80">
-          <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-vitra-cyan rounded-full shadow-[0_0_8px_rgba(0,229,255,0.8)]"></div>
-        </div>
+        <img 
+          src={activeHolo.imageUrl} 
+          alt="proyección" 
+          style={projectionStyle}
+          className="w-full h-full object-contain drop-shadow-[0_0_35px_rgba(0,229,255,0.3)]" 
+        />
       </motion.div>
 
       {/* Controller & Device Metadata Info */}
@@ -112,7 +74,7 @@ const Project = () => {
             <CubeIcon className="w-6 h-6 md:w-8 md:h-8 text-vitra-cyan" />
             <div>
               <p className="text-sm md:text-base font-bold text-white uppercase">{activeHolo.title}</p>
-              <p className="text-[10px] md:text-xs text-zinc-500">Formato: Piramidal 4-vías (HoloPyramid)</p>
+              <p className="text-[10px] md:text-xs text-zinc-500">Formato: Pantalla Completa Libre</p>
             </div>
           </div>
           <button className="bg-vitra-cyan/10 p-3 rounded-full text-vitra-cyan hover:bg-vitra-cyan/20 transition-colors hover:scale-110 active:scale-95">

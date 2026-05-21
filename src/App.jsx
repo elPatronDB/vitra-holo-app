@@ -9,9 +9,13 @@ import Project from './pages/Project';
 import Login from './pages/Login';
 import ProjectRemote from './pages/ProjectRemote';
 
+import GlobalProgressToast from './components/GlobalProgressToast';
+
 function App() {
   return (
-    <Routes>
+    <>
+      <GlobalProgressToast />
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/project-remote" element={<ProjectRemote />} />
       <Route element={<AuthGuard />}>
@@ -25,6 +29,7 @@ function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

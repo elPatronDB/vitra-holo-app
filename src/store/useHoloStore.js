@@ -16,8 +16,17 @@ export const useHoloStore = create((set, get) => ({
   bluetoothDeviceName: null,
   lumens: 80,
   screenBrightness: 90,
+  isGenerating: false,
+  generationProgress: 0,
+  generationStepText: '',
   unsubscribe: null,
   
+  setGenerationStatus: (isGenerating, progress, text) => set({ 
+    isGenerating, 
+    generationProgress: progress, 
+    generationStepText: text 
+  }),
+
   // Subscribe to real-time updates from Firestore for a specific user
   subscribeHolograms: (userId) => {
     // Unsubscribe from any previous query if active
