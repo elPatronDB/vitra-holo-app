@@ -7,11 +7,13 @@ import Gallery from './pages/Gallery';
 import Settings from './pages/Settings';
 import Project from './pages/Project';
 import Login from './pages/Login';
+import ProjectRemote from './pages/ProjectRemote';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/project-remote" element={<ProjectRemote />} />
       <Route element={<AuthGuard />}>
         <Route path="/" element={<AppShell />}>
           <Route index element={<Dashboard />} />
