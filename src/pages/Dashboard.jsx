@@ -2,6 +2,7 @@ import { useHoloStore } from '../store/useHoloStore';
 import { SparklesIcon, PlayCircleIcon } from '@heroicons/react/24/solid';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/useAuthStore';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const holograms = useHoloStore((state) => state.holograms);
@@ -37,15 +38,17 @@ const Dashboard = () => {
           ¿Listo para dar forma a la realidad hoy?
         </p>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="relative w-full md:w-auto md:min-w-[300px] bg-vitra-cyan text-vitra-graphite rounded-2xl py-4 px-6 font-bold flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,229,255,0.4)] border border-cyan-300 overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-x-[-100%] skew-x-[-15deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-          <SparklesIcon className="w-5 h-5 text-vitra-graphite" />
-          Nuevo Vitra Holograma
-        </motion.button>
+        <Link to="/generate">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative w-full md:w-auto md:min-w-[300px] bg-vitra-cyan text-vitra-graphite rounded-2xl py-4 px-6 font-bold flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,229,255,0.4)] border border-cyan-300 overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] skew-x-[-15deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
+            <SparklesIcon className="w-5 h-5 text-vitra-graphite" />
+            Nuevo Vitra Holograma
+          </motion.button>
+        </Link>
       </motion.section>
 
       {/* Recent Holograms */}
@@ -55,9 +58,11 @@ const Dashboard = () => {
             Hologramas Recientes
             <div className="w-2 h-2 rounded-full bg-vitra-cyan shadow-[0_0_8px_rgba(0,229,255,0.8)] animate-pulse"></div>
           </h3>
-          <button className="text-sm font-semibold text-vitra-cyan/70 hover:text-vitra-cyan transition-colors">
-            Ver Todos
-          </button>
+          <Link to="/gallery">
+            <button className="text-sm font-semibold text-vitra-cyan/70 hover:text-vitra-cyan transition-colors">
+              Ver Todos
+            </button>
+          </Link>
         </div>
 
         <motion.div
@@ -84,14 +89,14 @@ const Dashboard = () => {
                   </motion.div>
                 </div>
                 <div className="absolute top-3 left-3 bg-vitra-graphite/80 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 border border-white/10">
-                  <span className={`w-2 h-2 rounded-full ${holo.status === 'Listo' ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></span>
-                  <span className="text-xs font-bold text-zinc-200">{holo.status}</span>
+                  <span className={`w-2 h-2 rounded-full ${holo.status === 'Listo' || holo.status === 'IA Simulada' || holo.status === 'Propio' ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`}></span>
+                  <span className="text-xs font-bold text-zinc-200">{holo.status || 'Listo'}</span>
                 </div>
               </div>
               <div className="px-2 pb-2 flex-1 flex flex-col justify-between">
                 <div>
                   <h4 className="font-bold text-white text-lg leading-tight mb-1">{holo.title}</h4>
-                  <p className="text-xs font-medium text-vitra-cyan/50">{holo.createdAt}</p>
+                  <p className="text-xs font-medium text-vitra-cyan/50">{holo.createdAtFriendly || 'Reciente'}</p>
                 </div>
               </div>
             </motion.div>
