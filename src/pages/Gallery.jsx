@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useHoloStore } from '../store/useHoloStore';
-import { PhotoIcon, SparklesIcon } from '@heroicons/react/24/solid';
-import { motion } from 'framer-motion';
+import { PhotoIcon, SparklesIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const Gallery = () => {
-  const holograms = useHoloStore(state => state.holograms);
+  const { holograms, deleteHologram } = useHoloStore();
+  const [holoToDelete, setHoloToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -17,6 +20,20 @@ const Gallery = () => {
   const itemVariants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+  };
+
+  const handleDelete = async () => {
+    if (!holoToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteHologram(holoToDelete.id);
+      setHoloToDelete(null);
+    } catch (error) {
+      console.error("Error deleting hologram:", error);
+      alert("Hubo un problema al eliminar el holograma.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -68,7 +85,19 @@ const Gallery = () => {
                 alt={holo.title} 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-4">
+              
+              {/* Top Action Bar (Trash) */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button
+                  onClick={() => setHoloToDelete(holo)}
+                  className="bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-full backdrop-blur-sm shadow-lg transition-transform hover:scale-110 active:scale-95"
+                  title="Eliminar holograma"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-4">
                 <span className="text-sm font-bold text-white leading-tight line-clamp-1 mb-1">{holo.title}</span>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-[10px] text-vitra-cyan font-bold tracking-wider uppercase">{holo.status}</span>
@@ -77,7 +106,7 @@ const Gallery = () => {
               </div>
             </motion.div>
           ))}
-          {/* Optional decorative dashed card to encourage creation */}
+          {/* Decorative dashed card to encourage creation */}
           <Link to="/generate">
             <motion.div 
               variants={itemVariants}
@@ -90,6 +119,56 @@ const Gallery = () => {
           </Link>
         </motion.div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {holoToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setHoloToDelete(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-zinc-900 border border-white/10 p-6 rounded-3xl shadow-2xl w-full max-w-sm flex flex-col items-center text-center"
+            >
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                <ExclamationTriangleIcon className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¿Eliminar holograma?</h3>
+              <p className="text-zinc-400 text-sm mb-6">
+                Estás a punto de borrar <span className="text-white font-bold">"{holoToDelete.title}"</span>. Esta acción no se puede deshacer.
+              </p>
+              
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setHoloToDelete(null)}
+                  disabled={isDeleting}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 px-4 rounded-xl transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    'Eliminar'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

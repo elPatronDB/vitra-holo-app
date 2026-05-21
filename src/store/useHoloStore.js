@@ -6,6 +6,8 @@ import {
   where, 
   onSnapshot, 
   addDoc, 
+  deleteDoc,
+  doc,
   serverTimestamp 
 } from 'firebase/firestore';
 import { bluetoothService } from '../services/bluetoothService';
@@ -113,6 +115,17 @@ export const useHoloStore = create((set, get) => ({
       });
     } catch (error) {
       console.error("Error adding hologram:", error);
+      throw error;
+    }
+  },
+
+  // Delete a hologram from Firestore
+  deleteHologram: async (hologramId) => {
+    if (!hologramId || !db) return;
+    try {
+      await deleteDoc(doc(db, 'holograms', hologramId));
+    } catch (error) {
+      console.error("Error deleting hologram:", error);
       throw error;
     }
   },
