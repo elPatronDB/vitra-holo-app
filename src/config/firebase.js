@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Validate required environment variables
 const requiredEnv = [
@@ -16,6 +17,7 @@ const missing = requiredEnv.filter((key) => !import.meta.env[key]);
 let auth = null;
 let googleProvider = null;
 let db = null;
+let storage = null;
 
 if (missing.length === 0) {
   const firebaseConfig = {
@@ -29,6 +31,7 @@ if (missing.length === 0) {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   googleProvider = new GoogleAuthProvider();
+  storage = getStorage(app);
   
   // Enable persistent local cache using IndexedDB (handles multi-tab sync as well)
   db = initializeFirestore(app, {
@@ -40,4 +43,5 @@ if (missing.length === 0) {
   console.error("Missing Firebase env variables:", missing.join(", "));
 }
 
-export { auth, googleProvider, db };
+export { auth, googleProvider, db, storage };
+

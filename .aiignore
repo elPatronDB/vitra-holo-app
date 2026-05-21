@@ -1,0 +1,43 @@
+# Dependency directories
+node_modules/
+
+# Build and deployment output
+dist/
+build/
+.firebase/
+
+# Git and version control
+.git/
+.gitignore
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs and debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Lock files (can be huge)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDEs and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Public assets (images, fonts, etc. that don't need AI processing)
+public/
+src/assets/*.jpg
+src/assets/*.png
+src/assets/*.svg
+src/assets/*.ico

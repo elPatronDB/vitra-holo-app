@@ -4,8 +4,12 @@ import { SparklesIcon, PhotoIcon, CpuChipIcon } from '@heroicons/react/24/solid'
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/useAuthStore';
 import { useHoloStore } from '../store/useHoloStore';
+import { generateBaseImage } from '../services/geminiService';
+import { createHolographicLayout } from '../utils/canvasProcessor';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../config/firebase';
 
-// Map visual styles to stunning premium stock images
+// Map visual styles to standard previews for the selector
 const STYLE_IMAGES = {
   'Cyberpunk': 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?auto=format&fit=crop&q=80&w=800',
   'Realista': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800',
@@ -15,10 +19,10 @@ const STYLE_IMAGES = {
 
 const GENERATION_STEPS = [
   'Interpretando prompt e intenciones...',
-  'Generando nube de puntos 3D...',
-  'Reconstruyendo malla poligonal...',
-  'Aplicando texturas de proyección de lúmenes...',
-  'Sincronizando hologramas con la nube...',
+  'Generando imagen base con Gemini IA...',
+  'Analizando profundidad y texturas...',
+  'Componiendo proyección piramidal de 4 lados...',
+  'Sincronizando con Firestore y la nube...',
   '¡Listo!'
 ];
 
@@ -31,37 +35,79 @@ const Generate = () => {
   const [selectedStyle, setSelectedStyle] = useState('Cyberpunk');
   const [generating, setGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [apiWarning, setApiWarning] = useState(null);
+
+  const hasApiKey = !!import.meta.env.VITE_GEMINI_API_KEY;
 
   const handleGenerate = async (e) => {
     e.preventDefault();
     if (!prompt.trim() || !user) return;
 
     setGenerating(true);
-    setCurrentStep(0);
-
-    // Beautiful step-by-step progress simulation
-    const stepDuration = 500; // ms per step
-    for (let i = 0; i < GENERATION_STEPS.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, stepDuration));
-      setCurrentStep(i);
-    }
+    setCurrentStep(0); // Interpretando prompt...
+    setApiWarning(null);
 
     try {
-      // Pick image according to selected style
-      const imageUrl = STYLE_IMAGES[selectedStyle] || STYLE_IMAGES['Cyberpunk'];
+      // 1. Give context reading time
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setCurrentStep(1); // Generando imagen con Gemini...
 
-      // Save real document in Firestore linked to user's uid
+      // 2. Call the Gemini service
+      const genResult = await generateBaseImage(prompt.trim(), selectedStyle);
+      
+      if (genResult.isFallback && genResult.error) {
+        setApiWarning(genResult.error);
+      }
+
+      setCurrentStep(2); // Analizando profundidad...
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      setCurrentStep(3); // Componiendo proyección...
+      const holographicBlob = await createHolographicLayout(genResult.imageUrl);
+
+      setCurrentStep(4); // Sincronizando con la nube...
+      let finalImageUrl = genResult.imageUrl;
+
+      if (storage) {
+        try {
+          const timestamp = Date.now();
+          const storageRef = ref(storage, `holograms/${user.uid}/${timestamp}.png`);
+          await uploadBytes(storageRef, holographicBlob);
+          finalImageUrl = await getDownloadURL(storageRef);
+        } catch (storageError) {
+          console.error("Firebase Storage failure, writing as base64 in Firestore instead:", storageError);
+          // Fallback to storing as base64 URL inside Firestore
+          finalImageUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(holographicBlob);
+          });
+        }
+      } else {
+        // No storage available, save base64
+        finalImageUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(holographicBlob);
+        });
+      }
+
+      // 3. Save hologram details to Firestore
       await addHologram({
         title: prompt.trim(),
-        imageUrl: imageUrl,
-        status: 'Listo'
+        imageUrl: finalImageUrl,
+        status: genResult.isFallback ? 'Demo' : 'Listo'
       }, user.uid);
+
+      setCurrentStep(5); // ¡Listo!
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       // Reset form and navigate to gallery
       setPrompt('');
       navigate('/gallery');
     } catch (error) {
-      console.error("Failed to save hologram:", error);
+      console.error("Failed to generate and save hologram:", error);
+      alert(`Error en generación: ${error.message}`);
     } finally {
       setGenerating(false);
     }
@@ -69,9 +115,24 @@ const Generate = () => {
 
   return (
     <div className="flex flex-col gap-6 pb-20 md:max-w-3xl md:mx-auto w-full">
-      <header>
-        <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Crear IA</h2>
-        <p className="text-vitra-cyan/60 font-medium">Genera nuevos hologramas con inteligencia artificial</p>
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Crear IA</h2>
+          <p className="text-vitra-cyan/60 font-medium">Genera nuevos hologramas con inteligencia artificial</p>
+        </div>
+        <div className="shrink-0 self-start sm:self-center">
+          {hasApiKey ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-vitra-cyan/10 border border-vitra-cyan/20 text-[10px] font-bold uppercase tracking-wider text-vitra-cyan shadow-[0_0_10px_rgba(0,229,255,0.08)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-vitra-cyan animate-pulse" />
+              Gemini Imagen 3 Conectado
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Modo Demostración
+            </div>
+          )}
+        </div>
       </header>
 
       <motion.div 
@@ -90,6 +151,15 @@ const Generate = () => {
               onSubmit={handleGenerate}
               className="flex flex-col gap-6"
             >
+              {!hasApiKey && (
+                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex flex-col gap-1.5">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">💡 Clave de API no detectada</span>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Para habilitar generación por IA real, agrega <code className="text-white bg-zinc-800 px-1 py-0.5 rounded text-[10px]">VITE_GEMINI_API_KEY</code> a tu archivo <code className="text-white bg-zinc-800 px-1 py-0.5 rounded text-[10px]">.env.local</code>. Actualmente se usarán renders premium pre-diseñados procesados por nuestro motor Canvas.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-zinc-400 mb-2 uppercase tracking-widest">
                   Descripción del Holograma
@@ -98,7 +168,7 @@ const Generate = () => {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="w-full bg-zinc-800/80 border border-white/10 rounded-2xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-vitra-cyan/50 h-32 md:h-40 transition-shadow text-sm"
-                  placeholder="Ej: Un astronauta de neón flotando alrededor de un portal brillante..."
+                  placeholder="Ej: Una maqueta realista de un edificio de departamentos de cristal con luces interiores..."
                   required
                 />
               </div>
@@ -149,7 +219,6 @@ const Generate = () => {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-12 text-center"
             >
-              {/* Spinning chip effect */}
               <div className="relative w-24 h-24 mb-8">
                 <div className="absolute inset-0 rounded-full border-4 border-vitra-cyan/15 animate-spin" />
                 <div className="absolute inset-0 rounded-full border-4 border-t-vitra-cyan border-r-transparent border-b-transparent border-l-transparent animate-spin [animation-duration:1s]" />
@@ -160,10 +229,9 @@ const Generate = () => {
 
               <h3 className="text-xl font-bold text-white mb-2">Procesando Generación</h3>
               <p className="text-zinc-500 text-sm max-w-sm mb-6">
-                Nuestra Inteligencia Artificial está procesando tu prompt para modelar el holograma.
+                Nuestra Inteligencia Artificial está procesando tu prompt para modelar el holograma de 4 lados.
               </p>
 
-              {/* Progress bar */}
               <div className="w-full max-w-md bg-zinc-800 rounded-full h-1.5 overflow-hidden mb-4 border border-white/5">
                 <motion.div 
                   className="bg-vitra-cyan h-full shadow-[0_0_10px_rgba(0,229,255,0.5)]"
@@ -173,7 +241,6 @@ const Generate = () => {
                 />
               </div>
 
-              {/* Active step message */}
               <motion.span 
                 key={currentStep}
                 initial={{ opacity: 0, y: 5 }}
@@ -182,6 +249,12 @@ const Generate = () => {
               >
                 {GENERATION_STEPS[currentStep]}
               </motion.span>
+
+              {apiWarning && (
+                <p className="mt-4 text-[10px] text-amber-400/80 max-w-xs font-medium italic">
+                  * {apiWarning}
+                </p>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -196,7 +269,7 @@ const Generate = () => {
         >
           <PhotoIcon className="w-6 h-6 text-vitra-cyan shrink-0" />
           <p className="text-xs text-zinc-400">
-            Tu holograma se generará e indexará en IndexedDB y Firestore automáticamente al instante.
+            Tu holograma se generará en una plantilla cuadrada de 4 lados con fondo 100% negro y calibración central, lista para pirámides de proyección.
           </p>
         </motion.div>
       )}
