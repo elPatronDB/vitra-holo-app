@@ -97,14 +97,11 @@ const Generate = () => {
     try {
       if (isAI) {
         setGenerationStatus(true, 10, steps[0]);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
+        // Fast tracking
         setGenerationStatus(true, 30, steps[1]);
         const genResult = await generateBaseImage(payload.prompt, payload.selectedStyle);
         
         setGenerationStatus(true, 50, steps[2]);
-        await new Promise(resolve => setTimeout(resolve, 700));
-
         setGenerationStatus(true, 70, steps[3]);
         const holographicBlob = await createHolographicLayout(genResult.imageUrl);
 
@@ -120,12 +117,10 @@ const Generate = () => {
         setGenerationStatus(true, 100, steps[5]);
       } else {
         setGenerationStatus(true, 20, steps[0]);
-        await new Promise(resolve => setTimeout(resolve, 600));
-        
         setGenerationStatus(true, 40, steps[1]);
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         setGenerationStatus(true, 60, steps[2]);
+        
+        // Optimize upload path processing
         const holographicBlob = await createHolographicLayout(payload.filePreview);
 
         setGenerationStatus(true, 80, steps[3]);
@@ -140,8 +135,8 @@ const Generate = () => {
         setGenerationStatus(true, 100, steps[4]);
       }
       
-      // Keep "Listo" visible for 2 seconds before hiding
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Keep "Listo" visible for just 1.5 seconds
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setGenerationStatus(false, 0, '');
       
     } catch (error) {
