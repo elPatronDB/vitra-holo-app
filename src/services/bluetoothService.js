@@ -14,6 +14,8 @@ class BluetoothObserverService {
     this.deviceName = null;
     this.lumens = 80; // 0 to 100% (Projection light intensity)
     this.screenBrightness = 90; // 0 to 100% (Display emission)
+    this.prismGap = 8; // Distance from center (%)
+    this.prismSize = 32; // Size of the projection image (%)
     this.scanning = false;
     
     // Cross-Device Sync State
@@ -85,6 +87,8 @@ class BluetoothObserverService {
       deviceName: this.deviceName,
       lumens: this.lumens,
       screenBrightness: this.screenBrightness,
+      prismGap: this.prismGap,
+      prismSize: this.prismSize,
       scanning: this.scanning,
       
       // Sync parameters
@@ -118,6 +122,8 @@ class BluetoothObserverService {
     const initialData = {
       lumens: this.lumens,
       screenBrightness: this.screenBrightness,
+      prismGap: this.prismGap,
+      prismSize: this.prismSize,
       status: 'active',
       title: initialHolo?.title || 'Simulación de Holograma',
       imageUrl: initialHolo?.imageUrl || 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?auto=format&fit=crop&q=80&w=800',
@@ -242,6 +248,44 @@ class BluetoothObserverService {
         });
       } catch (err) {
         console.error("Error writing brightness sync:", err);
+      }
+    }
+  }
+
+  /**
+   * Adjust prism gap (distance from center).
+   */
+  async setPrismGap(value) {
+    const clampedVal = Math.max(0, Math.min(40, Number(value)));
+    this.prismGap = clampedVal;
+    this.notify();
+
+    if (this.isSyncActive && this.syncId && db) {
+      try {
+        await updateDoc(doc(db, 'device_sync', this.syncId), {
+          prismGap: clampedVal
+        });
+      } catch (err) {
+        console.error("Error writing prismGap sync:", err);
+      }
+    }
+  }
+
+  /**
+   * Adjust prism size (scale of the projection).
+   */
+  async setPrismSize(value) {
+    const clampedVal = Math.max(10, Math.min(80, Number(value)));
+    this.prismSize = clampedVal;
+    this.notify();
+
+    if (this.isSyncActive && this.syncId && db) {
+      try {
+        await updateDoc(doc(db, 'device_sync', this.syncId), {
+          prismSize: clampedVal
+        });
+      } catch (err) {
+        console.error("Error writing prismSize sync:", err);
       }
     }
   }

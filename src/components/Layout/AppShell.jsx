@@ -26,11 +26,11 @@ const AppShell = () => {
   const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Usuario';
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex justify-center selection:bg-white selection:text-black">
-      <div className="w-full md:max-w-7xl bg-base-100 h-screen relative flex flex-col md:flex-row overflow-hidden shadow-2xl md:shadow-none">
+    <div className="min-h-screen bg-zinc-950 flex justify-center selection:bg-white selection:text-black w-full">
+      <div className="w-full bg-base-100 h-screen relative flex flex-col md:flex-row overflow-hidden shadow-2xl md:shadow-none">
         
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 glass-effect border-r border-white/5 relative z-50">
+        <aside className="hidden md:flex flex-col w-64 xl:w-72 3xl:w-80 4k:w-96 glass-effect border-r border-white/5 relative z-50">
           <div className="p-6 flex items-center gap-3">
             <img src="/vitra_logo.png" alt="Vitra Logo" className="w-10 h-10 object-contain" />
             <h1 className="text-xl font-bold tracking-widest uppercase bg-gradient-to-r from-white to-vitra-cyan bg-clip-text text-transparent drop-shadow-md">

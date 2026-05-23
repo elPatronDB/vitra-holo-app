@@ -42,6 +42,39 @@ const ProjectRemote = () => {
     return () => unsubscribe();
   }, [syncId]);
 
+  // Request wake lock to prevent the screen from turning off automatically
+  useEffect(() => {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn(`Wake Lock error: ${err.name}, ${err.message}`);
+      }
+    };
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+    };
+  }, []);
+
   // Request fullscreen to maximize holographic projection experience
   const requestFullscreen = () => {
     const docEl = document.documentElement;
@@ -107,6 +140,8 @@ const ProjectRemote = () => {
   // Dynamic CSS Styles determined in real-time by the controller phone
   const lumensValue = syncData.lumens !== undefined ? syncData.lumens : 80;
   const brightnessValue = syncData.screenBrightness !== undefined ? syncData.screenBrightness : 90;
+  const prismGapValue = syncData.prismGap !== undefined ? syncData.prismGap : 8;
+  const prismSizeValue = syncData.prismSize !== undefined ? syncData.prismSize : 32;
 
   const projectionStyle = {
     opacity: lumensValue / 100,
@@ -139,14 +174,54 @@ const ProjectRemote = () => {
         </button>
       </motion.div>
 
-      {/* Projection Area (Single central image) */}
-      <div className="relative w-full h-full max-w-3xl max-h-3xl flex items-center justify-center p-8">
-        <img 
-          src={syncData.imageUrl} 
-          alt="holograma" 
-          style={projectionStyle}
-          className="w-full h-full object-contain drop-shadow-[0_0_35px_rgba(0,229,255,0.4)]" 
-        />
+      {/* Projection Area (Real-time CSS Composition for animations) */}
+      <div className="relative w-full aspect-square max-h-[85vh] max-w-[85vh] mx-auto flex items-center justify-center p-0">
+        <div className="relative w-full h-full flex items-center justify-center" style={projectionStyle}>
+          {/* Top Image (Rotated 180 and Mirrored) */}
+          <img 
+            src={syncData.imageUrl} 
+            style={{ 
+              width: `${prismSizeValue}%`, 
+              top: `${prismGapValue}%`,
+              transform: 'rotate(180deg) scaleX(-1)'
+            }} 
+            className="absolute object-contain origin-center" 
+            alt="top" 
+          />
+          {/* Bottom Image (Mirrored) */}
+          <img 
+            src={syncData.imageUrl} 
+            style={{ 
+              width: `${prismSizeValue}%`, 
+              bottom: `${prismGapValue}%`,
+              transform: 'scaleX(-1)'
+            }} 
+            className="absolute object-contain" 
+            alt="bottom" 
+          />
+          {/* Left Image (Rotated 90 and Mirrored) */}
+          <img 
+            src={syncData.imageUrl} 
+            style={{ 
+              width: `${prismSizeValue}%`, 
+              left: `${prismGapValue}%`,
+              transform: 'rotate(90deg) scaleX(-1)'
+            }} 
+            className="absolute object-contain origin-center" 
+            alt="left" 
+          />
+          {/* Right Image (Rotated -90 and Mirrored) */}
+          <img 
+            src={syncData.imageUrl} 
+            style={{ 
+              width: `${prismSizeValue}%`, 
+              right: `${prismGapValue}%`,
+              transform: 'rotate(-90deg) scaleX(-1)'
+            }} 
+            className="absolute object-contain origin-center" 
+            alt="right" 
+          />
+        </div>
       </div>
 
       {/* Subtle Live Feedback Indicator */}

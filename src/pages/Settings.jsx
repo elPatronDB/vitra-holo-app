@@ -5,7 +5,12 @@ import {
   UserCircleIcon, 
   ShieldCheckIcon,
   CheckIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  BellIcon,
+  SignalIcon,
+  PaintBrushIcon,
+  TrashIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuthStore from '../store/useAuthStore';
@@ -158,7 +163,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-20 w-full md:max-w-5xl md:mx-auto">
+    <div className="flex flex-col gap-6 pb-20 w-full md:max-w-7xl xl:max-w-[90rem] 3xl:max-w-[120rem] md:mx-auto">
       <header>
         <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Ajustes</h2>
         <p className="text-vitra-cyan/60 font-medium">Configura tus preferencias de usuario y cuenta</p>

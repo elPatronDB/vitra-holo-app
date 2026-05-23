@@ -1,0 +1,23 @@
+{
+  "plugins": ["plugins/markdown"],
+  "recurseDepth": 10,
+  "source": {
+    "include": ["src/services", "src/store", "src/utils"],
+    "includePattern": ".+\\.js(x)?$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "sourceType": "module",
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc", "closure"]
+  },
+  "templates": {
+    "cleverLinks": false,
+    "monospaceLinks": false
+  },
+  "opts": {
+    "destination": "./docs",
+    "recurse": true,
+    "readme": "./DOCUMENTACION_TECNICA.md"
+  }
+}

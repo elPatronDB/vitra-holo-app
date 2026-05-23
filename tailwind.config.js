@@ -8,6 +8,11 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        '3xl': '1920px',
+        '4k': '2560px',
+        'fuhd': '3840px',
+      },
       colors: {
         'vitra-graphite': '#1A1C23',
         'vitra-cream': '#F8F9FA',

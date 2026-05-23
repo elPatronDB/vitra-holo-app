@@ -67,26 +67,27 @@ const Generate = () => {
     reader.readAsDataURL(file);
   };
 
-  const saveHologramImage = async (holographicBlob) => {
+  const saveHologramImage = async (fileBlob, originalName = 'image.webp') => {
     if (storage) {
       try {
         const timestamp = Date.now();
-        const storageRef = ref(storage, `holograms/${user.uid}/${timestamp}.webp`);
-        await uploadBytes(storageRef, holographicBlob);
+        const extension = originalName.split('.').pop() || 'webp';
+        const storageRef = ref(storage, `holograms/${user.uid}/${timestamp}.${extension}`);
+        await uploadBytes(storageRef, fileBlob);
         return await getDownloadURL(storageRef);
       } catch (storageError) {
         console.error("Firebase Storage failure, writing as base64 in Firestore instead:", storageError);
         return await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(holographicBlob);
+          reader.readAsDataURL(fileBlob);
         });
       }
     } else {
       return await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(holographicBlob);
+        reader.readAsDataURL(fileBlob);
       });
     }
   };
@@ -101,30 +102,31 @@ const Generate = () => {
         setGenerationStatus(true, 30, steps[1]);
         const genResult = await generateBaseImage(payload.prompt, payload.selectedStyle);
         
-        setGenerationStatus(true, 50, steps[2]);
-        setGenerationStatus(true, 70, steps[3]);
-        const holographicBlob = await createHolographicLayout(genResult.imageUrl);
-
-        setGenerationStatus(true, 85, steps[4]);
-        const finalImageUrl = await saveHologramImage(holographicBlob);
+        setGenerationStatus(true, 60, steps[2]);
+        setGenerationStatus(true, 80, steps[3]);
+        
+        // Fetch raw generated image blob to upload directly!
+        // This avoids pre-compiling 4-way layouts, letting the projection pages 
+        // do the 4-way CSS rendering dynamically (avoiding the recursive 16-image bug).
+        const baseBlob = await fetch(genResult.imageUrl).then(r => r.blob());
+        const finalImageUrl = await saveHologramImage(baseBlob, 'ai-gen.jpg');
 
         await addHologram({
           title: payload.prompt,
           imageUrl: finalImageUrl,
-          status: 'IA Simulada'
+          status: genResult.isFallback ? 'IA Simulada' : 'IA Gemini'
         }, user.uid);
 
-        setGenerationStatus(true, 100, steps[5]);
+        setGenerationStatus(true, 100, genResult.isFallback ? '¡Listo! (Vía Simulación)' : '¡Listo! (Vía Gemini API)');
       } else {
         setGenerationStatus(true, 20, steps[0]);
         setGenerationStatus(true, 40, steps[1]);
         setGenerationStatus(true, 60, steps[2]);
         
-        // Optimize upload path processing
-        const holographicBlob = await createHolographicLayout(payload.filePreview);
+        // Directly upload the raw file to preserve GIFs and animation!
+        const finalImageUrl = await saveHologramImage(payload.file, payload.file.name);
 
         setGenerationStatus(true, 80, steps[3]);
-        const finalImageUrl = await saveHologramImage(holographicBlob);
 
         await addHologram({
           title: payload.customTitle,
@@ -151,18 +153,24 @@ const Generate = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (!uploadedFile || !customTitle.trim()) return;
-    processGenerationBackground(false, { filePreview, customTitle: customTitle.trim() });
-    setUploadedFile(null);
-    setFilePreview(null);
-    setCustomTitle('');
+    if (activeTab === 'ai') {
+      if (!prompt.trim()) return;
+      processGenerationBackground(true, { prompt: prompt.trim(), selectedStyle });
+      setPrompt('');
+    } else {
+      if (!uploadedFile || !customTitle.trim()) return;
+      processGenerationBackground(false, { file: uploadedFile, customTitle: customTitle.trim() });
+      setUploadedFile(null);
+      setFilePreview(null);
+      setCustomTitle('');
+    }
     
     // Redirect instantly to gallery while background process runs
     navigate('/gallery');
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-20 md:max-w-3xl md:mx-auto w-full">
+    <div className="flex flex-col gap-6 pb-20 md:max-w-5xl xl:max-w-7xl 3xl:max-w-[120rem] md:mx-auto w-full">
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Crear Holograma</h2>
@@ -191,27 +199,92 @@ const Generate = () => {
             onSubmit={handleSubmit}
             className="flex flex-col gap-6"
           >
-            {/* Tab Selector - AI Disabled Temporarily */}
+            {/* Tab Selector - AI Enabled */}
             <div className="flex bg-zinc-950/80 p-1.5 rounded-2xl border border-white/5 mb-2 relative overflow-hidden">
               <button
                 type="button"
-                disabled
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider text-zinc-600 bg-zinc-900/40 border border-transparent cursor-not-allowed"
-                title="Deshabilitado temporalmente para evitar consumos no deseados"
+                onClick={() => setActiveTab('ai')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === 'ai'
+                    ? 'bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40 border border-transparent'
+                }`}
               >
-                <SparklesIcon className="w-4 h-4 opacity-50" />
-                Modelar con IA (Próximamente)
+                <SparklesIcon className="w-4 h-4" />
+                Modelar con IA
               </button>
               <button
                 type="button"
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold transition-all"
+                onClick={() => setActiveTab('upload')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === 'upload'
+                    ? 'bg-vitra-cyan/10 border border-vitra-cyan/25 text-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.03)] font-extrabold'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900/40 border border-transparent'
+                }`}
               >
                 <ArrowUpTrayIcon className="w-4 h-4" />
                 Subir mi Imagen
               </button>
             </div>
 
-            {/* Custom Local Upload Form */}
+            {/* Conditional Tab Rendering */}
+            {activeTab === 'ai' ? (
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                    Describe tu Holograma (Prompt)
+                  </label>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Ej: Un cráneo de neón cyberpunk flotante, colores brillantes, modelado 3D..."
+                    className="w-full bg-zinc-800/80 border border-white/10 rounded-2xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-vitra-cyan/50 text-sm min-h-[100px] resize-none"
+                    required={activeTab === 'ai'}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                    Selecciona un Estilo Visual
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Object.keys(STYLE_IMAGES).map((style) => (
+                      <div
+                        key={style}
+                        onClick={() => setSelectedStyle(style)}
+                        className={`group relative rounded-2xl overflow-hidden border cursor-pointer transition-all duration-300 aspect-[4/3] ${
+                          selectedStyle === style
+                            ? 'border-vitra-cyan shadow-[0_0_15px_rgba(0,229,255,0.2)] scale-[1.03]'
+                            : 'border-white/10 hover:border-white/30 hover:scale-[1.01]'
+                        }`}
+                      >
+                        <img
+                          src={STYLE_IMAGES[style]}
+                          alt={style}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end p-3">
+                          <span className="text-xs font-bold text-white tracking-wide uppercase">
+                            {style}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={!prompt.trim()}
+                  className="w-full bg-vitra-cyan text-vitra-graphite font-bold py-4 rounded-2xl shadow-[0_0_20px_rgba(0,229,255,0.3)] transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <SparklesIcon className="w-5 h-5" />
+                  Generar Holograma con IA
+                </motion.button>
+              </div>
+            ) : (
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest">
@@ -250,7 +323,7 @@ const Generate = () => {
                         </div>
                         <p className="text-sm font-bold text-white">Haz clic o arrastra tu imagen aquí</p>
                         <p className="text-xs text-zinc-500 max-w-[280px] leading-relaxed">
-                          Soporta PNG, JPG o WEBP. Mantendremos el fondo transparente si tu imagen lo posee.
+                          Soporta PNG, JPG, WEBP y GIFs Animados. Mantendremos el fondo original y la animación si la posee.
                         </p>
                       </div>
                     )}
@@ -288,6 +361,7 @@ const Generate = () => {
                   Iniciar Procesamiento
                 </motion.button>
               </div>
+            )}
           </motion.form>
         </AnimatePresence>
       </motion.div>

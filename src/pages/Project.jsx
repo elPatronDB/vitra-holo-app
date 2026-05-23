@@ -3,7 +3,8 @@ import { useHoloStore } from '../store/useHoloStore';
 import useAuthStore from '../store/useAuthStore';
 import { 
   CubeIcon, PlayIcon, CpuChipIcon, SignalIcon, 
-  LightBulbIcon, SunIcon, CheckIcon, ClipboardDocumentIcon
+  LightBulbIcon, SunIcon, CheckIcon, ClipboardDocumentIcon,
+  ArrowsPointingOutIcon, ArrowsUpDownIcon
 } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { bluetoothService } from '../services/bluetoothService';
@@ -47,6 +48,41 @@ const Project = () => {
       bluetoothService.updateProjectingHolo(activeHolo.title, activeHolo.imageUrl);
     }
   }, [activeHolo, bleState.isSyncActive]);
+
+  // Request wake lock to prevent the screen from turning off automatically during local projection
+  useEffect(() => {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && projectionMode === 'local') {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.warn(`Wake Lock error: ${err.name}, ${err.message}`);
+      }
+    };
+
+    if (projectionMode === 'local') {
+      requestWakeLock();
+    }
+
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible' && projectionMode === 'local') {
+        requestWakeLock();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+    };
+  }, [projectionMode]);
 
   const handleCopyLink = (url) => {
     navigator.clipboard.writeText(url);
@@ -101,7 +137,7 @@ const Project = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-20 w-full md:max-w-5xl md:mx-auto">
+    <div className="flex flex-col gap-6 pb-20 w-full md:max-w-7xl xl:max-w-[90rem] 3xl:max-w-[120rem] md:mx-auto">
       <header>
         <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">Proyectar</h2>
         <p className="text-vitra-cyan/60 font-medium">Transmite tu holograma localmente o en dispositivos remotos</p>
@@ -154,13 +190,53 @@ const Project = () => {
             exit={{ opacity: 0 }}
             className="flex flex-col gap-6"
           >
-            <div className="relative w-full h-[50vh] md:h-[60vh] flex items-center justify-center bg-black/80 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden p-6">
-              <img 
-                src={activeHolo.imageUrl} 
-                alt="proyección local" 
-                style={projectionStyle}
-                className="w-full h-full object-contain drop-shadow-[0_0_35px_rgba(0,229,255,0.3)]" 
-              />
+            <div className="relative w-full aspect-square max-h-[70vh] max-w-[70vh] mx-auto flex items-center justify-center bg-black rounded-[40px] border border-white/5 shadow-2xl overflow-hidden p-0">
+              <div className="relative w-full h-full flex items-center justify-center" style={projectionStyle}>
+                {/* Top Image (Rotated 180 and Mirrored) */}
+                <img 
+                  src={activeHolo.imageUrl} 
+                  style={{ 
+                    width: `${bleState.prismSize}%`, 
+                    top: `${bleState.prismGap}%`,
+                    transform: 'rotate(180deg) scaleX(-1)'
+                  }} 
+                  className="absolute object-contain origin-center" 
+                  alt="top" 
+                />
+                {/* Bottom Image (Mirrored) */}
+                <img 
+                  src={activeHolo.imageUrl} 
+                  style={{ 
+                    width: `${bleState.prismSize}%`, 
+                    bottom: `${bleState.prismGap}%`,
+                    transform: 'scaleX(-1)'
+                  }} 
+                  className="absolute object-contain" 
+                  alt="bottom" 
+                />
+                {/* Left Image (Rotated 90 and Mirrored) */}
+                <img 
+                  src={activeHolo.imageUrl} 
+                  style={{ 
+                    width: `${bleState.prismSize}%`, 
+                    left: `${bleState.prismGap}%`,
+                    transform: 'rotate(90deg) scaleX(-1)'
+                  }} 
+                  className="absolute object-contain origin-center" 
+                  alt="left" 
+                />
+                {/* Right Image (Rotated -90 and Mirrored) */}
+                <img 
+                  src={activeHolo.imageUrl} 
+                  style={{ 
+                    width: `${bleState.prismSize}%`, 
+                    right: `${bleState.prismGap}%`,
+                    transform: 'rotate(-90deg) scaleX(-1)'
+                  }} 
+                  className="absolute object-contain origin-center" 
+                  alt="right" 
+                />
+              </div>
             </div>
           </motion.div>
         )}
@@ -385,6 +461,48 @@ const Project = () => {
             className="range range-warning range-sm cursor-pointer" 
           />
           <p className="text-[10px] text-zinc-500">Afecta el nivel de emisión de la pantalla móvil remota o local.</p>
+        </div>
+      </motion.div>
+
+      {/* CALIBRATION SLIDERS */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-col md:flex-row gap-6 bg-zinc-900/40 p-6 md:p-8 rounded-3xl border border-white/5"
+      >
+        <div className="flex-1 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <ArrowsUpDownIcon className="w-5 h-5 text-fuchsia-400" />
+              Apertura Central (Gap)
+            </label>
+            <span className="text-sm font-extrabold text-fuchsia-400">{bleState.prismGap}%</span>
+          </div>
+          <input 
+            type="range" min="0" max="40" 
+            value={bleState.prismGap} 
+            onChange={(e) => bluetoothService.setPrismGap(e.target.value)}
+            className="range range-secondary range-sm cursor-pointer" 
+          />
+          <p className="text-[10px] text-zinc-500">Aleja o acerca las imágenes al centro. Ajusta esto al tamaño de la base de tu prisma (ej. 2x2 pulgadas).</p>
+        </div>
+
+        <div className="flex-1 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
+              <ArrowsPointingOutIcon className="w-5 h-5 text-indigo-400" />
+              Tamaño de Imagen (Escala)
+            </label>
+            <span className="text-sm font-extrabold text-indigo-400">{bleState.prismSize}%</span>
+          </div>
+          <input 
+            type="range" min="10" max="80" 
+            value={bleState.prismSize} 
+            onChange={(e) => bluetoothService.setPrismSize(e.target.value)}
+            className="range range-primary range-sm cursor-pointer" 
+          />
+          <p className="text-[10px] text-zinc-500">Aumenta o reduce el tamaño de los hologramas para que no se corten en los bordes del cristal.</p>
         </div>
       </motion.div>
 
